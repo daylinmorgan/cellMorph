@@ -1,18 +1,4 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: light
-#       format_version: '1.5'
-#       jupytext_version: 1.14.0
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
-# +
+# %%
 import torch
 import detectron2
 
@@ -27,7 +13,7 @@ import numpy as np
 import pandas as pd
 import os, json, cv2, random
 import matplotlib.pyplot as plt
-# %matplotlib inline
+%matplotlib inline
 
 # Import image processing
 from skimage import measure
@@ -42,8 +28,8 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
-# -
 
+# %%
 from detectron2.structures import BoxMode
 def getCellDicts(imgDir, baseDir):
 # Get training information
@@ -94,8 +80,7 @@ def getCellDicts(imgDir, baseDir):
         datasetDicts.append(record)
     return datasetDicts
 
-
-# +
+# %%
 if "cellMorph_train" in DatasetCatalog:
     DatasetCatalog.remove("cellMorph_train")
     
@@ -114,13 +99,14 @@ DatasetCatalog.register("cellMorph_" + "Validate", lambda x=inputs: getCellDicts
 MetadataCatalog.get("cellMorph_" + "Validate").set(thing_classes=["cell"])
 
 cell_metadata = MetadataCatalog.get("cellMorph_train")
-# -
 
+# %%
 # Look at training curves in tensorboard:
-# # %load_ext tensorboard
-# %reload_ext tensorboard
-# %tensorboard --logdir output --port 6060
+# %load_ext tensorboard
+%reload_ext tensorboard
+%tensorboard --logdir output --port 6060
 
+# %%
 cfg = get_cfg()
 if not torch.cuda.is_available():
     print('CUDA not available, resorting to CPU')
@@ -138,13 +124,14 @@ cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # The "RoIHead batch size". 128
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 cfg.OUTPUT_DIR = './output/AG2021'
 
+# %%
 # Inference should use the config with parameters that are used in training
 # cfg now already contains everything we've set previously. We changed it a little bit for inference:
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold
 predictor = DefaultPredictor(cfg)
 
-# +
+# %%
 from detectron2.utils.visualizer import ColorMode
 
 imgDir = './AG2021/MasksFinal/Validate'
@@ -164,12 +151,13 @@ for d in random.sample(dataset_dicts, 1):
     plt.figure(figsize=(10,10))
     plt.imshow(out.get_image()[:, :, ::-1])
     plt.show()
-# -
 
+# %%
 imgDir = './AG2021/MasksFinal/Train'
 baseDir = './AG2021'
 dataset_dicts = getCellDicts(imgDir, baseDir)
 
+# %%
 random.seed(1234)
 for d in random.sample(dataset_dicts, 1):
     img = cv2.imread(d["file_name"])
@@ -178,4 +166,7 @@ for d in random.sample(dataset_dicts, 1):
     plt.imshow(out.get_image()[:, :, ::-1])
     plt.show()
 
+# %%
 fname = d["file_name"]
+
+
