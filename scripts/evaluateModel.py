@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import os, json, cv2, random
 import matplotlib.pyplot as plt
-%matplotlib inline
+# %matplotlib inline
 
 # Import image processing
 from skimage import measure
@@ -84,28 +84,24 @@ def getCellDicts(imgDir, baseDir):
 if "cellMorph_train" in DatasetCatalog:
     DatasetCatalog.remove("cellMorph_train")
     
-imgDir = './AG2021/MasksFinal/Train'
-baseDir = './AG2021'
+imgDir = '../data/AG2021/MasksFinal/Train'
+baseDir = '../data/AG2021'
 inputs = [imgDir, baseDir]
 
 DatasetCatalog.register("cellMorph_" + "train", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
 MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
 
-imgDir = './AG2021/MasksFinal/Validate'
-baseDir = './AG2021'
+if "cellMorph_Validate" in DatasetCatalog:
+    DatasetCatalog.remove("cellMorph_Validate")
+
+imgDir = '../data/AG2021/MasksFinal/Validate'
+baseDir = '../data/AG2021'
 inputs = [imgDir, baseDir]
 
 DatasetCatalog.register("cellMorph_" + "Validate", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
 MetadataCatalog.get("cellMorph_" + "Validate").set(thing_classes=["cell"])
 
 cell_metadata = MetadataCatalog.get("cellMorph_train")
-
-# %%
-# Look at training curves in tensorboard:
-# %load_ext tensorboard
-%reload_ext tensorboard
-%tensorboard --logdir output --port 6060
-
 # %%
 cfg = get_cfg()
 if not torch.cuda.is_available():
@@ -122,7 +118,7 @@ cfg.SOLVER.MAX_ITER = 300    # 300 iterations seems good enough for this toy dat
 cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
-cfg.OUTPUT_DIR = './output/AG2021'
+cfg.OUTPUT_DIR = '../output/AG2021'
 
 # %%
 # Inference should use the config with parameters that are used in training
@@ -134,13 +130,13 @@ predictor = DefaultPredictor(cfg)
 # %%
 from detectron2.utils.visualizer import ColorMode
 
-imgDir = './AG2021/MasksFinal/Validate'
-baseDir = './AG2021'
+imgDir = '../data/AG2021/MasksFinal/Validate'
+baseDir = '../data/AG2021'
 
 dataset_dicts = getCellDicts(imgDir, baseDir)
+# %%
 for d in random.sample(dataset_dicts, 1):    
-    # im = cv2.imread(d["file_name"])
-    im = cv2.imread(fname)
+    im = cv2.imread(d["file_name"])
     outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
     v = Visualizer(im[:, :, ::-1],
                    metadata=cell_metadata, 
@@ -151,22 +147,34 @@ for d in random.sample(dataset_dicts, 1):
     plt.figure(figsize=(10,10))
     plt.imshow(out.get_image()[:, :, ::-1])
     plt.show()
+# %% Save training image that is predicted
+imgDir = '../data/AG2021/MasksFinal/Train'
+baseDir = '../data/AG2021'
 
-# %%
-imgDir = './AG2021/MasksFinal/Train'
-baseDir = './AG2021'
 dataset_dicts = getCellDicts(imgDir, baseDir)
-
 # %%
 random.seed(1234)
 for d in random.sample(dataset_dicts, 1):
     img = cv2.imread(d["file_name"])
     visualizer = Visualizer(img[:, :, ::-1], metadata=cell_metadata, scale=0.5)
     out = visualizer.draw_dataset_dict(d)
+
+    plt.figure(figsize=(20,20))
+    plt.subplot(121)
     plt.imshow(out.get_image()[:, :, ::-1])
-    plt.show()
+    plt.title('Input Training Image')
+    outputs = predictor(img)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+    v = Visualizer(img[:, :, ::-1],
+                   metadata=cell_metadata, 
+                   scale=1, 
+                   instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
+    )
+    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+
+    plt.subplot(122)
+    plt.imshow(out.get_image()[:, :, ::-1])
+    plt.title('Phase Contrast Predicted Image')
+    plt.savefig('../data/initMaskRCNNRes.png')
+
 
 # %%
-fname = d["file_name"]
-
-
