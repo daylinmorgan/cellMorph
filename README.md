@@ -15,7 +15,7 @@ Files in the `data` folder are organized like so:
 │   │   ├── label
 │   │   │   ├── train
 │   │   │   └── val
-│   │   ├── masks
+│   │   ├── mask
 │   │   └── phaseContrast
 ```
 
