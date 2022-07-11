@@ -12,7 +12,7 @@ Files in the `data` folder are organized like so:
 ├── data
 │   ├── experiment
 │   │   ├── composite
-│   │   ├── labels
+│   │   ├── label
 │   │   │   ├── train
 │   │   │   └── val
 │   │   ├── masks
