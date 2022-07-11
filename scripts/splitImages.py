@@ -15,7 +15,7 @@ fname = '../data/AG2021/phaseContrast/phaseContrast_C5_1_2020y06m19d_03h33m.jpg'
 im = cv2.imread(fname)
 plt.imshow(im)
 # %%
-def splitIm(im, nIms):
+def imSplit(im, nIms=4):
     div = int(np.sqrt(nIms))
     M = im.shape[0]//div
     N = im.shape[1]//div
@@ -26,7 +26,7 @@ def splitIm(im, nIms):
             tiles.append(im[x:x+M,y:y+N])
     return tiles
 nIms = 4
-tiles = splitIm(im, nIms)
+tiles = imSplit(im, nIms)
 # %% View split images
 # The way the images are split up does not work properly with subplots, but you get the idea
 nIms = len(tiles)
@@ -39,8 +39,7 @@ for nIm in range(nIms):
     plt.imshow(tiles[nIm])
     nIm += 1
 
-# %% Split images
-
+# %% Split masks
 # Access files in mask and phaseContrast directories, split them,
 # then save to split directory
 dataDir = '../data/AG2021'
@@ -49,5 +48,30 @@ splitDir = '../data/AG2021Split'
 maskNames = os.listdir(os.path.join(dataDir, 'mask'))
 
 for maskName in maskNames:
-    
+    # Read and split mask
+    mask = cv2.imread(os.path.join(dataDir, 'mask', maskName), cv2.IMREAD_UNCHANGED)
+    maskSplit = imSplit(mask, 4)
+
+    # For each mask append a number, then save it
+    for num, mask in enumerate(maskSplit):
+        newMaskName =  '.'.join([maskName.split('.')[0]+'_'+str(num+1), maskName.split('.')[1]])
+        newMaskPath = os.path.join(splitDir, 'mask', newMaskName)
+        cv2.imwrite(newMaskPath, mask)
+# %%
+dataDir = '../data/AG2021'
+splitDir = '../data/AG2021Split'
+# Split up masks
+imNames = os.listdir(os.path.join(dataDir, 'phaseContrast'))
+
+for imName in imNames:
+    # Read and split mask
+    im = cv2.imread(os.path.join(dataDir, 'phaseContrast', imName))
+    tiles = imSplit(im, 4)
+
+    # For each mask append a number, then save it
+    for num, im in enumerate(tiles):
+        newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
+        newImPath = os.path.join(splitDir, 'phaseContrast', newImName)
+        # print(newImPath)
+        cv2.imwrite(newImPath, im)
 # %%
