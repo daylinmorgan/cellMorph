@@ -31,77 +31,88 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 
 # %%
 from detectron2.structures import BoxMode
-def getCellDicts(imgDir, baseDir):
-# Get training information
-    imgs = os.listdir(imgDir)
+def getCellDicts(expDir, stage):
+    labelDir = os.path.join(expDir, 'label', stage)
+
+    imgs = os.listdir(labelDir)
     imgs = [img for img in imgs if img.endswith('.csv')]
 
-    # Gather information for each image
     datasetDicts = []
-    for idx, img in enumerate(imgs):
+    idx = 0
+    for img in imgs:
         # Information for the whole image
-        record = {}
+        
         imgBase = '_'.join(img.split('_')[1:])[:-4]
-        phaseContrastName = os.path.join(baseDir, 'PhaseContrast','PhaseContrast_'+imgBase+'.jpg')
-        height, width = cv2.imread(phaseContrastName).shape[:2]
+        
+        annos = pd.read_csv(os.path.join(labelDir, img))
+        for splitNum in range(1,5):
+            phaseContrastName = 'phaseContrast_'+imgBase+'_'+str(splitNum)+'.jpg'
+            phaseContrastPath = os.path.join(expDir, 'phaseContrast',phaseContrastName)
+            height, width = cv2.imread(phaseContrastPath).shape[:2]
 
-        record['file_name'] = phaseContrastName
-        record['image_id'] = idx
-        record['height'] = height
-        record['width'] = width
+            record = {}
+            record['file_name'] = phaseContrastPath
+            record['image_id'] = idx
+            record['height'] = height
+            record['width'] = width
+            # Cell information is stored in a .csv
+            # Load the corresponding image, and store its information
+            maskName = 'mask_'+imgBase+'_'+str(splitNum)+'.tif'
+            maskPath = os.path.join(expDir, 'mask', maskName)
+            imgMask = cv2.imread(maskPath, cv2.IMREAD_UNCHANGED)
+            objs = []
+            for maskLabel, fluorescence in zip(annos['maskLabel'], annos['fluorescence']):
+                # Contour converts the mask to a polygon
+                contours = measure.find_contours(img_as_float(imgMask==maskLabel), .5)
+                # The convex hull is used to merge any extra contours
+                hull = []
+                for contour in contours:
+                    hull+=contour[ConvexHull(contour).vertices].tolist()
+                # If a cell is found, it's added to the list
+                if len(hull)>0:
+                    hull = np.array(hull)[ConvexHull(hull).vertices]
 
-        # Cell information is stored in a .csv
-        # Load the corresponding image, and store its information
-        annos = pd.read_csv(os.path.join(imgDir, img))
-        imgMaskName = os.path.join(baseDir, 'MasksLabeled', 'MasksLabeled_'+imgBase+'.tif')
-        imgMask = cv2.imread(imgMaskName, cv2.IMREAD_UNCHANGED)
-        objs = []
-        for maskLabel, fluorescence in zip(annos['maskLabel'], annos['fluorescence']):
-            # Contour converts the mask to
-            contours = measure.find_contours(img_as_float(imgMask==maskLabel), .5)
-            hull = []
-            for contour in contours:
-                hull+=contour[ConvexHull(contour).vertices].tolist()
-            hull = np.array(hull)[ConvexHull(hull).vertices]
+                    px = hull[:,1]
+                    py = hull[:,0]
+                    poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
+                    poly = [p for x in poly for p in x]
 
-            px = hull[:,1]
-            py = hull[:,0]
-            poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
-            poly = [p for x in poly for p in x]
-
-            obj = {
-                "bbox": [np.min(px), np.min(py), np.max(px), np.max(py)],
-                "bbox_mode": BoxMode.XYXY_ABS,
-                "segmentation": [poly],
-                "category_id": 0,
-            }
-            objs.append(obj)
-        record["annotations"] = objs
-        datasetDicts.append(record)
+                    obj = {
+                        "bbox": [np.min(px), np.min(py), np.max(px), np.max(py)],
+                        "bbox_mode": BoxMode.XYXY_ABS,
+                        "segmentation": [poly],
+                        "category_id": 0,
+                    }
+                    objs.append(obj)
+            record["annotations"] = objs
+            datasetDicts.append(record)
     return datasetDicts
 
 # %%
 if "cellMorph_train" in DatasetCatalog:
     DatasetCatalog.remove("cellMorph_train")
     
-imgDir = '../data/AG2021/MasksFinal/Train'
-baseDir = '../data/AG2021'
-inputs = [imgDir, baseDir]
+expDir = '../data/AG2021Split'
+stage = 'train'
+
+inputs = [expDir, stage]
+if "cellMorph_train" in DatasetCatalog:
+    DatasetCatalog.remove("cellMorph_train")
 
 DatasetCatalog.register("cellMorph_" + "train", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
 MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
-
-if "cellMorph_Validate" in DatasetCatalog:
-    DatasetCatalog.remove("cellMorph_Validate")
-
-imgDir = '../data/AG2021/MasksFinal/Validate'
-baseDir = '../data/AG2021'
-inputs = [imgDir, baseDir]
-
-DatasetCatalog.register("cellMorph_" + "Validate", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
-MetadataCatalog.get("cellMorph_" + "Validate").set(thing_classes=["cell"])
-
 cell_metadata = MetadataCatalog.get("cellMorph_train")
+
+expDir = '../data/AG2021Split'
+stage = 'val'
+
+inputs = [expDir, stage]
+if "cellMorph_val" in DatasetCatalog:
+    DatasetCatalog.remove("cellMorph_val")
+
+DatasetCatalog.register("cellMorph_" + "val", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
+MetadataCatalog.get("cellMorph_" + "val").set(thing_classes=["cell"])
+cell_metadata = MetadataCatalog.get("cellMorph_val")
 # %%
 cfg = get_cfg()
 if not torch.cuda.is_available():
@@ -118,7 +129,7 @@ cfg.SOLVER.MAX_ITER = 300    # 300 iterations seems good enough for this toy dat
 cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
-cfg.OUTPUT_DIR = '../output/AG2021'
+cfg.OUTPUT_DIR = '../output/AG2021Split'
 
 # %%
 # Inference should use the config with parameters that are used in training
@@ -130,10 +141,7 @@ predictor = DefaultPredictor(cfg)
 # %%
 from detectron2.utils.visualizer import ColorMode
 
-imgDir = '../data/AG2021/MasksFinal/Validate'
-baseDir = '../data/AG2021'
-
-dataset_dicts = getCellDicts(imgDir, baseDir)
+datasetDicts = getCellDicts(inputs[0], inputs[1])
 # %%
 for d in random.sample(dataset_dicts, 1):    
     im = cv2.imread(d["file_name"])

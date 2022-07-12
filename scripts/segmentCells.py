@@ -29,7 +29,6 @@ from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
 # %% Data loader
-
 def getCellDicts(expDir, stage):
     labelDir = os.path.join(expDir, 'label', stage)
 
