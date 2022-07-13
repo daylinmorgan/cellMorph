@@ -37,9 +37,10 @@ def getCellDicts(expDir, stage):
 
     datasetDicts = []
     idx = 0
+    fluoro2Int = {'red': 0, 'green': 1}
+
     for img in imgs:
 
-        fluoro2Int = {'red': 0, 'green': 1}
         # Information for the whole image
         imgBase = '_'.join(img.split('_')[1:])[:-4]
         
