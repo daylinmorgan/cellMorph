@@ -38,8 +38,9 @@ def getCellDicts(expDir, stage):
     datasetDicts = []
     idx = 0
     for img in imgs:
+
+        fluoro2Int = {'red': 0, 'green': 1}
         # Information for the whole image
-        
         imgBase = '_'.join(img.split('_')[1:])[:-4]
         
         annos = pd.read_csv(os.path.join(labelDir, img))
@@ -59,6 +60,7 @@ def getCellDicts(expDir, stage):
             maskPath = os.path.join(expDir, 'mask', maskName)
             imgMask = cv2.imread(maskPath, cv2.IMREAD_UNCHANGED)
             objs = []
+
             for maskLabel, fluorescence in zip(annos['maskLabel'], annos['fluorescence']):
                 # Contour converts the mask to a polygon
                 contours = measure.find_contours(img_as_float(imgMask==maskLabel), .5)
@@ -79,7 +81,7 @@ def getCellDicts(expDir, stage):
                         "bbox": [np.min(px), np.min(py), np.max(px), np.max(py)],
                         "bbox_mode": BoxMode.XYXY_ABS,
                         "segmentation": [poly],
-                        "category_id": 0,
+                        "category_id": fluoro2Int[fluorescence],
                     }
                     objs.append(obj)
             record["annotations"] = objs
@@ -94,17 +96,17 @@ if "cellMorph_train" in DatasetCatalog:
     DatasetCatalog.remove("cellMorph_train")
 
 DatasetCatalog.register("cellMorph_" + "train", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
-MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
+MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["red", "green"])
 cell_metadata = MetadataCatalog.get("cellMorph_train")
 # %% Visualization of data loader
-# datasetDicts = getCellDicts(inputs[0], inputs[1])
-# for d in random.sample(datasetDicts, 3):
-#     print(d["file_name"])
-#     img = cv2.imread(d["file_name"])
-#     visualizer = Visualizer(img[:, :, ::-1], metadata=cell_metadata, scale=0.5)
-#     out = visualizer.draw_dataset_dict(d)
-#     plt.imshow(out.get_image()[:, :, ::-1])
-#     plt.show()
+datasetDicts = getCellDicts(inputs[0], inputs[1])
+for d in random.sample(datasetDicts, 3):
+    print(d["file_name"])
+    img = cv2.imread(d["file_name"])
+    visualizer = Visualizer(img[:, :, ::-1], metadata=cell_metadata, scale=0.5)
+    out = visualizer.draw_dataset_dict(d)
+    plt.imshow(out.get_image()[:, :, ::-1])
+    plt.show()
 # %%
 from detectron2.engine import DefaultTrainer
 
@@ -122,9 +124,9 @@ cfg.SOLVER.BASE_LR = 0.00025  # pick a good LR
 cfg.SOLVER.MAX_ITER = 1000    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
 cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
-cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (cell). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2  # only has one class (cell). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
-cfg.OUTPUT_DIR = '../output/AG2021Split16'
+cfg.OUTPUT_DIR = '../output/AG2021Classify'
 
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 trainer = DefaultTrainer(cfg) 
