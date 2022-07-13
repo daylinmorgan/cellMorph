@@ -3,6 +3,8 @@ import os
 import shutil
 import cv2
 import numpy as np
+import pandas as pd
+import pickle
 # %%
 def makeNewExperimentDirectory(experimentName):
     """
@@ -114,8 +116,32 @@ def splitExpIms(experiment, nIms=16):
     
     shutil.copytree(originalTrain, newTrain)
     shutil.copytree(originalVal, newVal)
-# %%
-experiment = 'AG2021'
-nIms = 16
-splitExpIms('AG2021', nIms=16)
+
+def convertLabels(labelDir):
+    """
+    Converts labels from their .csv representation to a pickled dictionary
+    Inputs:
+    labelDir: Directory where labels are stored as train and val
+    Outputs:
+    A nested pickled dictionary for each image containing
+    information about each cell's identity
+    """
+    labels = {}
+    # Walk through directory and add each image's information
+    for root, dirs, files in os.walk(labelDir):
+        print(root)
+        for imageLabel in files:
+            if imageLabel.endswith('.csv'):
+                labelDf = pd.read_csv(os.path.join(root,imageLabel))
+                imBase = '_'.join(imageLabel.split('.')[0].split('_')[1:])
+
+                maskLabels = labelDf['maskLabel']
+                groups = labelDf['fluorescence']
+
+                # Each image also has a dictionary which is accessed by the mask label
+                labels[imBase] = {}
+                for maskLabel, group in zip(maskLabels, groups):
+                    labels[imBase][maskLabel] = group
+    saveName = os.path.join(labelDir, 'labels.pkl')
+    pickle.dump(labels, open(saveName, "wb"))
 # %%
