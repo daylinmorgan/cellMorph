@@ -25,6 +25,8 @@ import matplotlib.pyplot as plt
 # Import image processing
 from skimage import measure
 from skimage import img_as_float
+from skimage.color import rgb2hsv
+from skimage.io import imread
 from scipy.spatial import ConvexHull
 
 # import some common detectron2 utilities
@@ -208,7 +210,7 @@ def getSegmentModel(modelPath: str):
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
     cfg.SOLVER.IMS_PER_BATCH = 2  # This is the real "batch size" commonly known to deep learning people
     cfg.SOLVER.BASE_LR = 0.00025  # pick a good LR
-    cfg.SOLVER.MAX_ITER = 10000    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
+    cfg.SOLVER.MAX_ITER = 10000    # 300 iterations seems good enough for this toy dataset you will need to train longer for a practical dataset
     cfg.SOLVER.STEPS = []        # do not decay learning rate
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
@@ -218,4 +220,77 @@ def getSegmentModel(modelPath: str):
     predictor = DefaultPredictor(cfg)
 
     return predictor
+def segmentGreen(RGB):
+    """
+    Finds green pixels from Incucyte data
+    Input: RGB image
+    Output: # of green pixels and mask of green pixels
+    """
+    # def segment
+    I = rgb2hsv(RGB)
+
+    # Define thresholds for channel 1 based on histogram settings
+    channel1Min = 0.129
+    channel1Max = 0.845
+
+    # Define thresholds for channel 2 based on histogram settings
+    channel2Min = 0.309
+    channel2Max = 1.000
+
+    # Define thresholds for channel 3 based on histogram settings
+    channel3Min = 0.761
+    channel3Max = 1.000
+
+    # Create mask based on chosen histogram thresholds
+    sliderBW =  np.array(I[:,:,0] >= channel1Min ) & np.array(I[:,:,0] <= channel1Max) & \
+                np.array(I[:,:,1] >= channel2Min ) & np.array(I[:,:,1] <= channel2Max) & \
+                np.array(I[:,:,2] >= channel3Min ) & np.array(I[:,:,2] <= channel3Max)
+    BW = sliderBW
+
+    # Initialize output masked image based on input image.
+    maskedRGBImage = RGB.copy()
+
+    # Set background pixels where BW is false to zero.
+    maskedRGBImage[~np.dstack((BW, BW, BW))] = 0
+
+    nGreen = np.sum(BW)
+    return([nGreen, BW])
+
+def segmentRed(RGB):
+    """
+    Finds red pixels from Incucyte data
+    Input: RGB image
+    Output: # of red pixels and mask of green pixels
+    """
+    # Convert RGB image to chosen color space
+    I = rgb2hsv(RGB)
+
+    # Define thresholds for channel 1 based on histogram settings
+    channel1Min = 0.724
+    channel1Max = 0.185
+
+    # Define thresholds for channel 2 based on histogram settings
+    channel2Min = 0.277
+    channel2Max = 1.000
+
+    # Define thresholds for channel 3 based on histogram settings
+    channel3Min = 0.638
+    channel3Max = 1.000
+
+    # Create mask based on chosen histogram thresholds
+    sliderBW =  np.array(I[:,:,0] >= channel1Min )  | np.array(I[:,:,0] <= channel1Max)  & \
+                np.array(I[:,:,1] >= channel2Min ) &  np.array(I[:,:,1] <= channel2Max) & \
+                np.array(I[:,:,2] >= channel3Min ) &  np.array(I[:,:,2] <= channel3Max)
+    BW = sliderBW
+
+    # Initialize output masked image based on input image.
+    maskedRGBImage = RGB.copy()
+
+    # Set background pixels where BW is false to zero.
+
+    maskedRGBImage[~np.dstack((BW, BW, BW))] = 0
+
+    nRed = np.sum(BW)
+    return([nRed, BW])
 # %%
+RGB = imread('/stor/work/Brock/Tyler/cellMorph/data/AG2021Split16/composite/composite_C5_1_2020y06m19d_00h33m_1.jpg')
