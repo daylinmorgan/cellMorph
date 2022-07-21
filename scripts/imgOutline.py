@@ -51,6 +51,7 @@ class cellPerims:
         RGB[~np.dstack((mask,mask,mask))] = 0
         plt.figure()
         plt.imshow(RGB)
+        plt.plot(self.perimeter[:,1], self.perimeter[:,0])
         plt.title(self.color)
 # %%
 experiment = 'AG2021Split16'
@@ -86,6 +87,5 @@ for imbase, splitNum in zip(imbases, splitNums):
             cells.append(cellPerims(experiment, imbase, splitNum, mask))
     c+=1
 pickle.dump(cells, open('../data/results/AG2021Split16CellPerims.pickle', "wb"))
-# %%
-RGB = imread("../data/AG2021Split16/composite/composite_C5_1_2020y06m19d_21h33m_2.jpg")
-pc = imread("../data/AG2021Split16/phaseContrast/phaseContrast_C5_1_2020y06m19d_21h33m_2.jpg")
+# %% Align all perimeters
+perim = cells[2].perimeter

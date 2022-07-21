@@ -22,12 +22,14 @@ import os, json, cv2, random
 import matplotlib.pyplot as plt
 # %matplotlib inline
 
+from scipy.interpolate import interp1d
+from scipy.spatial import ConvexHull
+
 # Import image processing
 from skimage import measure
 from skimage import img_as_float
 from skimage.color import rgb2hsv
 from skimage.io import imread
-from scipy.spatial import ConvexHull
 
 # import some common detectron2 utilities
 from detectron2 import model_zoo
@@ -310,6 +312,25 @@ def findFluorescenceColor(RGBLocation, mask):
         return "red"
     else:
         return "NaN"
+
+def interpolatePerimeter(perim: np.array, nPts: int=150):
+    """
+    Interpolates a 2D curve to a given number of points. 
+    Adapted from: https://stackoverflow.com/questions/52014197/how-to-interpolate-a-2d-curve-in-python
+    Inputs:
+    perim: 2D numpy array of dimension nptsx2
+    nPts: Number of interpolated points
+    Outputs:
+    perimInt: Interpolated perimeter
+    """
+    distance = np.cumsum( np.sqrt(np.sum( np.diff(perim, axis=0)**2, axis=1 )) )
+    distance = np.insert(distance, 0, 0)/distance[-1]
+    alpha = np.linspace(0, 1, nPts)
+
+    interpolator =  interp1d(distance, perim, kind='cubic', axis=0)
+    perimInt = interpolator(alpha)
+    
+    return perimInt
 # %%
 # RGB = imread('/stor/work/Brock/Tyler/cellMorph/data/AG2021Split16/composite/composite_C5_1_2020y06m19d_00h33m_1.jpg')
 # %%
