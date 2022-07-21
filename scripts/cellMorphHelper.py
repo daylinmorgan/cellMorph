@@ -220,6 +220,7 @@ def getSegmentModel(modelPath: str):
     predictor = DefaultPredictor(cfg)
 
     return predictor
+
 def segmentGreen(RGB):
     """
     Finds green pixels from Incucyte data
@@ -254,7 +255,7 @@ def segmentGreen(RGB):
     maskedRGBImage[~np.dstack((BW, BW, BW))] = 0
 
     nGreen = np.sum(BW)
-    return([nGreen, BW])
+    return nGreen, BW
 
 def segmentRed(RGB):
     """
@@ -291,6 +292,24 @@ def segmentRed(RGB):
     maskedRGBImage[~np.dstack((BW, BW, BW))] = 0
 
     nRed = np.sum(BW)
-    return([nRed, BW])
+    return nRed, BW
+
+def findFluorescenceColor(RGBLocation, mask):
+    """
+    Finds the fluorescence of a cell
+    Input: RGB image location
+    Output: Color
+    """
+    RGB = imread(RGBLocation)
+    RGB[~np.dstack((mask,mask,mask))] = 0
+    nGreen, BW = segmentGreen(RGB)
+    nRed, BW = segmentRed(RGB)
+    if nGreen>=(nRed+100):
+        return "green"
+    elif nRed>=(nGreen+100):
+        return "red"
+    else:
+        return "NaN"
 # %%
-RGB = imread('/stor/work/Brock/Tyler/cellMorph/data/AG2021Split16/composite/composite_C5_1_2020y06m19d_00h33m_1.jpg')
+# RGB = imread('/stor/work/Brock/Tyler/cellMorph/data/AG2021Split16/composite/composite_C5_1_2020y06m19d_00h33m_1.jpg')
+# %%
