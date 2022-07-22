@@ -32,6 +32,7 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 # %%
 from detectron2.structures import BoxMode
 def getCellDicts(expDir, stage):
+    
     labelDir = os.path.join(expDir, 'label', stage)
 
     imgs = os.listdir(labelDir)
@@ -103,7 +104,7 @@ if "cellMorph_train" in DatasetCatalog:
     DatasetCatalog.remove("cellMorph_train")
 
 DatasetCatalog.register("cellMorph_" + "train", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
-MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
+MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["red", "green"])
 cell_metadata = MetadataCatalog.get("cellMorph_train")
 
 expDir = '../data/AG2021Split16'
@@ -114,7 +115,7 @@ if "cellMorph_val" in DatasetCatalog:
     DatasetCatalog.remove("cellMorph_val")
 
 DatasetCatalog.register("cellMorph_" + "val", lambda x=inputs: getCellDicts(inputs[0], inputs[1]))
-MetadataCatalog.get("cellMorph_" + "val").set(thing_classes=["cell"])
+MetadataCatalog.get("cellMorph_" + "val").set(thing_classes=["red", "green"])
 cell_metadata = MetadataCatalog.get("cellMorph_val")
 # %%
 cfg = get_cfg()
@@ -128,11 +129,11 @@ cfg.DATALOADER.NUM_WORKERS = 2
 cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
 cfg.SOLVER.IMS_PER_BATCH = 2  # This is the real "batch size" commonly known to deep learning people
 cfg.SOLVER.BASE_LR = 0.00025  # pick a good LR
-cfg.SOLVER.MAX_ITER = 1000    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
+cfg.SOLVER.MAX_ITER = 10000    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
 cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
-cfg.OUTPUT_DIR = '../output/AG2021Split16'
+cfg.OUTPUT_DIR = '../output/AG2021Classify'
 
 # %%
 # Inference should use the config with parameters that are used in training

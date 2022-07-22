@@ -1,26 +1,22 @@
 # %%
 import sys, importlib
-importlib.reload(sys.modules['cellMorphHelper'])
+# importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
 import os
 import cv2
 import numpy as np
 from skimage.io import imread
+
 import matplotlib.pyplot as plt
-from cellMorphHelper import getSegmentModel, findFluorescenceColor
+from cellMorphHelper import getSegmentModel, findFluorescenceColor, interpolatePerimeter, procrustes
 
 from skimage import data, measure
 from skimage.segmentation import clear_border
+
 from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.visualizer import ColorMode
 
 # %%
-predictor = getSegmentModel('../output/AG2021Split16')
-
-# %%
-
-# %%
-
 class cellPerims:
     """
     Assigns properties of cells from phase contrast imaging
@@ -53,6 +49,8 @@ class cellPerims:
         plt.imshow(RGB)
         plt.plot(self.perimeter[:,1], self.perimeter[:,0])
         plt.title(self.color)
+        
+predictor = getSegmentModel('../output/AG2021Split16')
 # %%
 experiment = 'AG2021Split16'
 ims = os.listdir(os.path.join('../data',experiment, 'phaseContrast'))
@@ -61,9 +59,9 @@ splitNums = [int(im.split('.')[0].split('_')[-1]) for im in ims]
 
 cells = []
 
-nIms = 2
-imbases = imbases[0:nIms]
-splitNums = splitNums[0:nIms]
+# nIms = 2
+# imbases = imbases[0:nIms]
+# splitNums = splitNums[0:nIms]
 c = 1
 for imbase, splitNum in zip(imbases, splitNums):
     fname = 'phaseContrast_'+imbase+'_'+str(splitNum)+'.jpg'
@@ -87,5 +85,48 @@ for imbase, splitNum in zip(imbases, splitNums):
             cells.append(cellPerims(experiment, imbase, splitNum, mask))
     c+=1
 pickle.dump(cells, open('../data/results/AG2021Split16CellPerims.pickle', "wb"))
-# %% Align all perimeters
-perim = cells[2].perimeter
+# %% 
+redCells, greenCells = [], []
+
+for cell in cells:
+    # Align all perimeters
+    cell.perimInt = interpolatePerimeter(cell.perimeter)
+    # Add to appropriate list
+    if cell.color == 'red':
+        redCells.append(cell)
+    elif cell.color == 'green':
+        greenCells.append(cell)
+
+# Align green cells
+plt.figure()
+greenCells[0].perimAligned = greenCells[0].perimInt - np.mean(greenCells[0].perimInt, axis=0)
+referencePerim = greenCells[0].perimAligned
+
+c = 1
+for cell in greenCells[1:]:
+    currentPerim = cell.perimInt
+    
+    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim)
+
+    cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
+# Align red cells
+for cell in redCells:
+    referencePerim = greenCells[0].perimAligned
+    currentPerim = cell.perimInt
+    
+    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim)
+
+    cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
+# %% Format for further analysis
+cellPerims = []
+cellColors = []
+
+for cell in cells:
+    if cell.color == 'NaN':
+        continue
+    cellPerims.append(cell.perimAligned.ravel())
+    cellColors.append(cell.color)
+
+cellPerims = pd.DataFrame(cellPerims)
+cellPerims['color'] = cellColors
+cellPerims.to_csv('../data/results/cellPerims.csv')
