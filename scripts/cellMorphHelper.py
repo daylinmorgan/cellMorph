@@ -110,60 +110,68 @@ def splitExpIms(experiment, nIms=16):
 
     print('Splitting masks')    
     # Split and save masks
-    maskNames = os.listdir(os.path.join(dataDir, 'mask'))
+    maskDir = os.path.join(dataDir, 'mask')
+    if os.path.isdir(maskDir):
+        maskNames = os.listdir(maskDir)
 
-    for maskName in maskNames:
-        # Read and split mask
-        mask = cv2.imread(os.path.join(dataDir, 'mask', maskName), cv2.IMREAD_UNCHANGED)
-        maskSplit = imSplit(mask, nIms)
+        for maskName in maskNames:
+            # Read and split mask
+            mask = cv2.imread(os.path.join(dataDir, 'mask', maskName), cv2.IMREAD_UNCHANGED)
+            maskSplit = imSplit(mask, nIms)
 
-        # For each mask append a number, then save it
-        for num, mask in enumerate(maskSplit):
-            newMaskName =  '.'.join([maskName.split('.')[0]+'_'+str(num+1), maskName.split('.')[1]])
-            newMaskPath = os.path.join(splitDir, 'mask', newMaskName)
-            cv2.imwrite(newMaskPath, mask)
+            # For each mask append a number, then save it
+            for num, mask in enumerate(maskSplit):
+                newMaskName =  '.'.join([maskName.split('.')[0]+'_'+str(num+1), maskName.split('.')[1]])
+                newMaskPath = os.path.join(splitDir, 'mask', newMaskName)
+                cv2.imwrite(newMaskPath, mask)
 
     print('Splitting images')
     # Split up phase contrast images
-    imNames = os.listdir(os.path.join(dataDir, 'phaseContrast'))
+    pcDir = os.path.join(dataDir, 'phaseContrast')
+    if os.path.isdir(pcDir):
+        imNames = os.listdir(pcDir)
 
-    for imName in imNames:
-        # Read and split mask
-        im = cv2.imread(os.path.join(dataDir, 'phaseContrast', imName))
-        tiles = imSplit(im, nIms)
+        for imName in imNames:
+            # Read and split mask
+            im = cv2.imread(os.path.join(dataDir, 'phaseContrast', imName))
+            print('\t {}'.format(imName))
+            tiles = imSplit(im, nIms)
 
-        # For each mask append a number, then save it
-        for num, im in enumerate(tiles):
-            newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
-            newImPath = os.path.join(splitDir, 'phaseContrast', newImName)
-            cv2.imwrite(newImPath, im)
+            # For each mask append a number, then save it
+            for num, im in enumerate(tiles):
+                newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
+                newImPath = os.path.join(splitDir, 'phaseContrast', newImName)
+                cv2.imwrite(newImPath, im)
 
     print('Splitting composite')
     # Split up composite images
-    imNames = os.listdir(os.path.join(dataDir, 'composite'))
+    compositeDir = os.path.join(dataDir, 'composite')
+    if os.path.isdir(compositeDir):
+        imNames = os.listdir(compositeDir)
 
-    for imName in imNames:
-        # Read and split mask
-        im = cv2.imread(os.path.join(dataDir, 'composite', imName))
-        tiles = imSplit(im, nIms)
+        for imName in imNames:
+            # Read and split mask
+            im = cv2.imread(os.path.join(dataDir, 'composite', imName))
+            tiles = imSplit(im, nIms)
 
-        # For each mask append a number, then save it
-        for num, im in enumerate(tiles):
-            newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
-            newImPath = os.path.join(splitDir, 'composite', newImName)
-            cv2.imwrite(newImPath, im)   
+            # For each mask append a number, then save it
+            for num, im in enumerate(tiles):
+                newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
+                newImPath = os.path.join(splitDir, 'composite', newImName)
+                cv2.imwrite(newImPath, im)   
     # Copy over labels
     originalTrain = os.path.join(dataDir, 'label', 'train')
     originalVal = os.path.join(dataDir,'label', 'val')
 
-    newTrain = os.path.join(splitDir, 'label', 'train')
-    newVal =   os.path.join(splitDir,'label', 'val')
+    if os.path.isdir(originalTrain):
+        newTrain = os.path.join(splitDir, 'label', 'train')
+        newVal =   os.path.join(splitDir,'label', 'val')
 
-    shutil.rmtree(newTrain)
-    shutil.rmtree(newVal)
-    
-    shutil.copytree(originalTrain, newTrain)
-    shutil.copytree(originalVal, newVal)
+        shutil.rmtree(newTrain)
+        shutil.rmtree(newVal)
+        
+        shutil.copytree(originalTrain, newTrain)
+        shutil.copytree(originalVal, newVal)
 
 def convertLabels(labelDir):
     """

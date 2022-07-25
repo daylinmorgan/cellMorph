@@ -1,6 +1,6 @@
 # %%
 import sys, importlib
-# importlib.reload(sys.modules['cellMorphHelper'])
+importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
 import os
 import cv2
