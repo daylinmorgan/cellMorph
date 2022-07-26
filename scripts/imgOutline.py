@@ -1,6 +1,6 @@
 # %%
 import sys, importlib
-importlib.reload(sys.modules['cellMorphHelper'])
+# importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
 import os
 import cv2
@@ -32,7 +32,7 @@ class cellPerims:
         self.experiment = experiment
         self.imageBase = imageBase
         self.splitNum = splitNum
-        fname = imageBase+'_'+str(splitNum)+'.jpg'
+        fname = imageBase+'_'+str(splitNum)+'.png'
         self.phaseContrast = os.path.join('../data', experiment, 'phaseContrast','phaseContrast_'+fname)
         self.composite = os.path.join('../data', experiment, 'composite', 'composite_'+fname)
         self.mask = mask
@@ -52,19 +52,17 @@ class cellPerims:
         
 predictor = getSegmentModel('../output/AG2021Split16')
 # %%
-experiment = 'AG2021Split16'
+experiment = 'TJ2201Split16'
+print('Starting Experiment: {}'.format(experiment))
 ims = os.listdir(os.path.join('../data',experiment, 'phaseContrast'))
 imbases = ['_'.join(im.split('.')[0].split('_')[1:-1]) for im in ims]
 splitNums = [int(im.split('.')[0].split('_')[-1]) for im in ims]
 
 cells = []
 
-# nIms = 2
-# imbases = imbases[0:nIms]
-# splitNums = splitNums[0:nIms]
 c = 1
 for imbase, splitNum in zip(imbases, splitNums):
-    fname = 'phaseContrast_'+imbase+'_'+str(splitNum)+'.jpg'
+    fname = 'phaseContrast_'+imbase+'_'+str(splitNum)+'.png'
     print('{}/{} Img: {}'.format(c, len(imbases), fname))
     imPath = os.path.join('../data',experiment,'phaseContrast',fname)
     im = imread(imPath)
@@ -78,13 +76,16 @@ for imbase, splitNum in zip(imbases, splitNums):
     outputs = predictor(im)['instances'].to("cpu")
     nCells = len(outputs)
     for cellNum in range(nCells):
-        print('\t Cell {}/{}'.format(cellNum+1, nCells))
+        # print('\t Cell {}/{}'.format(cellNum+1, nCells))
         mask = outputs[cellNum].pred_masks.numpy()[0]
         mask = clear_border(mask)
         if np.sum(mask)>10:
             cells.append(cellPerims(experiment, imbase, splitNum, mask))
     c+=1
-pickle.dump(cells, open('../data/results/AG2021Split16CellPerims.pickle', "wb"))
+    if c % 100 == 0:
+        print('\t Saving at ../data/results/{}CellPerims.pickle'.format(experiment))
+        pickle.dump(cells, open('../data/results/{}CellPerims.pickle'.format(experiment), "wb"))
+
 # %% 
 redCells, greenCells = [], []
 
@@ -130,3 +131,4 @@ for cell in cells:
 cellPerims = pd.DataFrame(cellPerims)
 cellPerims['color'] = cellColors
 cellPerims.to_csv('../data/results/cellPerims.csv')
+pickle.dump(cells, open('../data/results/{}CellPerims.pickle'.format(experiment), "wb"))
