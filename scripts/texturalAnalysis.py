@@ -7,8 +7,7 @@ import pickle
 import random
 import numpy as np
 
-≈
-
+from cellMorphHelper import cellPerims
 from skimage.color import rgb2gray
 from skimage.measure import find_contours
 import cv2
@@ -16,7 +15,7 @@ import cv2
 import pyfeats
 # %%
 experiment = 'TJ2201Split16'
-cells=pickle.load(open('../data/results/{}CellPerims.pickle'.format(experiment),"rb"))
+cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
 
 # %% Pyfeatures test
 # Take subset of cells
@@ -110,5 +109,5 @@ for cell in cellSample:
 # %%
 X = pd.DataFrame(allFeatures)
 X['colors'] = y
-X.to_csv('../data/{}textureFeatures.csv'.format(experiment), index=0)
+X.to_csv('../results/{}textureFeatures.csv'.format(experiment), index=0)
 # %%

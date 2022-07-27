@@ -9,6 +9,7 @@ from skimage.io import imread
 
 import matplotlib.pyplot as plt
 from cellMorphHelper import getSegmentModel, findFluorescenceColor, interpolatePerimeter, procrustes
+from cellMorphHelper import cellPerims
 
 from skimage import data, measure
 from skimage.segmentation import clear_border
@@ -16,42 +17,9 @@ from skimage.segmentation import clear_border
 from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.visualizer import ColorMode
 
-# %%
-class cellPerims:
-    """
-    Assigns properties of cells from phase contrast imaging
-    """
-    def findPerimeter(self):
-        c = measure.find_contours(self.mask)
-        # assert len(c) == 1, "Error for {}".format(self.composite)
-        return c[0]
-    
-    
-    def __init__(self, experiment, imageBase, splitNum, mask):
-        # try:
-        self.experiment = experiment
-        self.imageBase = imageBase
-        self.splitNum = splitNum
-        fname = imageBase+'_'+str(splitNum)+'.png'
-        self.phaseContrast = os.path.join('../data', experiment, 'phaseContrast','phaseContrast_'+fname)
-        self.composite = os.path.join('../data', experiment, 'composite', 'composite_'+fname)
-        self.mask = mask
-
-        self.perimeter = self.findPerimeter()
-
-        self.color = findFluorescenceColor(self.composite, self.mask)
-
-    def imshow(self):
-        RGB = imread(self.composite)
-        mask = self.mask
-        RGB[~np.dstack((mask,mask,mask))] = 0
-        plt.figure()
-        plt.imshow(RGB)
-        plt.plot(self.perimeter[:,1], self.perimeter[:,0])
-        plt.title(self.color)
-        
+# %%    
 predictor = getSegmentModel('../output/AG2021Split16')
-# %%
+# %% Find masks for experiment
 experiment = 'TJ2201Split16'
 print('Starting Experiment: {}'.format(experiment))
 ims = os.listdir(os.path.join('../data',experiment, 'phaseContrast'))
@@ -61,32 +29,32 @@ splitNums = [int(im.split('.')[0].split('_')[-1]) for im in ims]
 cells = []
 
 c = 1
+# Go through each image
 for imbase, splitNum in zip(imbases, splitNums):
     fname = 'phaseContrast_'+imbase+'_'+str(splitNum)+'.png'
     print('{}/{} Img: {}'.format(c, len(imbases), fname))
     imPath = os.path.join('../data',experiment,'phaseContrast',fname)
     im = imread(imPath)
-    outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
-    v = Visualizer(im[:, :, ::-1],
-                #    metadata=cell_metadata, 
-                   scale=1, 
-                   instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
-    )
+
     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     outputs = predictor(im)['instances'].to("cpu")
     nCells = len(outputs)
+
+    # Append information for each cell
     for cellNum in range(nCells):
-        # print('\t Cell {}/{}'.format(cellNum+1, nCells))
         mask = outputs[cellNum].pred_masks.numpy()[0]
         mask = clear_border(mask)
         if np.sum(mask)>10:
             cells.append(cellPerims(experiment, imbase, splitNum, mask))
     c+=1
-    if c % 100 == 0:
-        print('\t Saving at ../data/results/{}CellPerims.pickle'.format(experiment))
-        pickle.dump(cells, open('../data/results/{}CellPerims.pickle'.format(experiment), "wb"))
 
-# %% 
+    # Save periodically
+    if c % 100 == 0:
+        print('\t Saving at ../results/{}CellPerims.pickle'.format(experiment))
+        pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
+
+pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
+# %% Align green and red cells to reference cell so that they are all the same orientation
 redCells, greenCells = [], []
 
 for cell in cells:
@@ -117,17 +85,5 @@ for cell in redCells:
     refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
-# %% Format for further analysis
-cellPerims = []
-cellColors = []
-
-for cell in cells:
-    if cell.color == 'NaN':
-        continue
-    cellPerims.append(cell.perimAligned.ravel())
-    cellColors.append(cell.color)
-
-cellPerims = pd.DataFrame(cellPerims)
-cellPerims['color'] = cellColors
-cellPerims.to_csv('../data/results/cellPerims.csv')
-pickle.dump(cells, open('../data/results/{}CellPerims.pickle'.format(experiment), "wb"))
+# Write altered cell perimeters
+pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))

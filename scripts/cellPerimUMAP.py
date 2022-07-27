@@ -166,7 +166,7 @@ def interpolatePerimeter(perim: np.array, nPts: int=150):
     return perimInt
 # %%
 experiment = 'TJ2201Split16'
-cells=pickle.load(open('../data/results/{}CellPerims.pickle'.format(experiment),"rb"))
+cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
 # %%
 # %% 
 redCells, greenCells = [], []
@@ -211,7 +211,7 @@ for cell in cells:
 
 cellPerims = pd.DataFrame(cellPerims)
 
-pickle.dump(cells, open('../data/results/{}CellPerims.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
 # cellPerims['color'] = cellColors
 # %%
 # colors = perims['color']
@@ -228,9 +228,9 @@ plt.xlabel('UMAP 1')
 plt.ylabel('UMAP 2')
 plt.title('ESAM +/- Perimeter UMAP')
 # %%
-# pickle.dump(cell, open('../data/results/test.pickle', "wb"))
+# pickle.dump(cell, open('../results/test.pickle', "wb"))
 
-# cell=pickle.load(open('../data/results/test.pickle',"rb"))
+# cell=pickle.load(open('../results/test.pickle',"rb"))
 
 for cell in cells:
     cell.__class__ = eval(cell.__class__.__name__)
