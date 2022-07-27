@@ -9,7 +9,7 @@ from skimage.io import imread
 
 import matplotlib.pyplot as plt
 from cellMorphHelper import getSegmentModel, findFluorescenceColor, interpolatePerimeter, procrustes
-from cellMorphHelper import cellPerims
+from cellMorph import cellPerims
 
 from skimage import data, measure
 from skimage.segmentation import clear_border
@@ -87,3 +87,8 @@ for cell in redCells:
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 # Write altered cell perimeters
 pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
+
+# %%
+# If something bad happened where you need to pickle a new object, fix it with this:
+# for cell in cells:
+#     cell.__class__ = eval(cell.__class__.__name__)`
