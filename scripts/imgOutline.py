@@ -99,7 +99,6 @@ for cell in cells:
         greenCells.append(cell)
 
 # Align green cells
-plt.figure()
 greenCells[0].perimAligned = greenCells[0].perimInt - np.mean(greenCells[0].perimInt, axis=0)
 referencePerim = greenCells[0].perimAligned
 
