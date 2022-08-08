@@ -1,3 +1,7 @@
+# %% [markdown]
+"""
+This script loads all images and saves their outlines.
+"""
 # %%
 import sys, importlib
 # importlib.reload(sys.modules['cellMorphHelper'])
@@ -87,6 +91,3 @@ for cell in redCells:
 pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
 
 # %%
-# If something bad happened where you need to pickle a new object, fix it with this:
-# for cell in cells:
-#     cell.__class__ = eval(cell.__class__.__name__)`

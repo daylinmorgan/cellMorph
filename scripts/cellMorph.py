@@ -45,3 +45,7 @@ class cellPerims:
         # assert len(c) == 1, "Error for {}".format(self.composite)
         return c[0]
     
+
+# If something bad happened where you need to pickle a new object, fix it with this:
+# for cell in cells:
+#     cell.__class__ = eval(cell.__class__.__name__)`
