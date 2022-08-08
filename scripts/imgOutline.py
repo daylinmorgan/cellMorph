@@ -35,8 +35,6 @@ for imbase, splitNum in zip(imbases, splitNums):
     print('{}/{} Img: {}'.format(c, len(imbases), fname))
     imPath = os.path.join('../data',experiment,'phaseContrast',fname)
     im = imread(imPath)
-
-    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     outputs = predictor(im)['instances'].to("cpu")
     nCells = len(outputs)
 
@@ -74,7 +72,7 @@ c = 1
 for cell in greenCells[1:]:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim)
+    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 # Align red cells
@@ -82,7 +80,7 @@ for cell in redCells:
     referencePerim = greenCells[0].perimAligned
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim)
+    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 # Write altered cell perimeters

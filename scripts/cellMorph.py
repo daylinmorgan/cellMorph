@@ -4,9 +4,12 @@ Holds necessary structural information for storing cell information
 """
 # %%
 import numpy as np
+import os
 
 from skimage.io import imread
 from skimage.measure import find_contours
+
+from cellMorphHelper import findFluorescenceColor
 # %%
 class cellPerims:
     """
@@ -38,7 +41,7 @@ class cellPerims:
         plt.title(self.color)
 
     def findPerimeter(self):
-        c = measure.find_contours(self.mask)
+        c = find_contours(self.mask)
         # assert len(c) == 1, "Error for {}".format(self.composite)
         return c[0]
     

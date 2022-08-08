@@ -1,3 +1,7 @@
+# %% [markdown]
+"""
+
+"""
 # %%
 import umap
 import pandas as pd
@@ -5,11 +9,11 @@ import numpy
 import matplotlib.pyplot as plt
 import pickle
 
-from cellMorphHelper import cellPerims
+from cellMorph import cellPerims
 # %%
 experiment = 'TJ2201Split16'
 cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
-# %%
+
 # %% 
 redCells, greenCells = [], []
 
@@ -74,8 +78,7 @@ plt.title('ESAM +/- Perimeter UMAP')
 
 # cell=pickle.load(open('../results/test.pickle',"rb"))
 
-for cell in cells:
-    cell.__class__ = eval(cell.__class__.__name__)
+
 
 # %%
 experiment = 'TJ2201Split16'
