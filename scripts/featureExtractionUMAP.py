@@ -8,8 +8,8 @@ import pandas as pd
 import numpy
 import matplotlib.pyplot as plt
 import pickle
-
-from cellMorph import cellPerims
+import numpy as np
+# from cellMorph import cellPerims
 # %%
 experiment = 'TJ2201Split16'
 cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
@@ -82,7 +82,7 @@ plt.title('ESAM +/- Perimeter UMAP')
 
 # %%
 experiment = 'TJ2201Split16'
-df = pd.read_csv('../data/{}textureFeatures.csv'.format(experiment), index_col=0).reset_index()
+df = pd.read_csv('../results/{}textureFeatures.csv'.format(experiment), index_col=0).reset_index()
 df = df.dropna()
 y = df['colors']
 df = df.drop(labels='colors', axis=1)
@@ -104,3 +104,4 @@ from sklearn.metrics import roc_auc_score
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1234)
 clf = LogisticRegression(solver="liblinear", random_state=1234, C=1e-6,max_iter=1e7).fit(X_train, y_train)
 roc_auc_score(y_test, clf.predict_proba(X_test)[:, 0])
+# %%

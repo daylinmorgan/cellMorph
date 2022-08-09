@@ -40,6 +40,8 @@ from skimage import img_as_float
 from skimage.color import rgb2hsv
 from skimage.io import imread
 
+import pyfeats
+
 # import some common detectron2 utilities
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
@@ -428,6 +430,69 @@ def procrustes(X, Y, scaling=False, reflection='best'):
     tform = {'rotation':T, 'scale':b, 'translation':c}
 
     return d, Z, tform
+
+def extractFeatures(f, mask, perim):
+    """
+    A wrapper function for pyfeats (https://github.com/giakou4/pyfeats) to extract parameters
+    Inputs:
+    f: A grayscale image scaled between 0 and 255
+    mask: A mask of ints where the cell is located
+    perim: The perimeter of the cell
+
+    Outputs:
+    allLabels: List of descriptors for each feature
+    allFeatures: List of features for the given image
+    """
+
+    features = {}
+    features['A_FOS']       = pyfeats.fos(image, mask)
+    features['A_GLCM']      = pyfeats.glcm_features(image, ignore_zeros=True)
+    features['A_GLDS']      = pyfeats.glds_features(image, mask, Dx=[0,1,1,1], Dy=[1,1,0,-1])
+    features['A_NGTDM']     = pyfeats.ngtdm_features(image, mask, d=1)
+    features['A_SFM']       = pyfeats.sfm_features(image, mask, Lr=4, Lc=4)
+    features['A_LTE']       = pyfeats.lte_measures(image, mask, l=7)
+    features['A_FDTA']      = pyfeats.fdta(image, mask, s=3)
+    features['A_GLRLM']     = pyfeats.glrlm_features(image, mask, Ng=256)
+    features['A_FPS']       = pyfeats.fps(image, mask)
+    features['A_Shape_par'] = pyfeats.shape_parameters(image, mask, perimeter, pixels_per_mm2=1)
+    features['A_HOS']       = pyfeats.hos_features(image, th=[135,140])
+    features['A_LBP']       = pyfeats.lbp_features(image, image, P=[8,16,24], R=[1,2,3])
+    features['A_GLSZM']     = pyfeats.glszm_features(image, mask)
+
+    #% B. Morphological features
+    # features['B_Morphological_Grayscale_pdf'], features['B_Morphological_Grayscale_cdf'] = pyfeats.grayscale_morphology_features(image, N=30)
+    # features['B_Morphological_Binary_L_pdf'], features['B_Morphological_Binary_M_pdf'], features['B_Morphological_Binary_H_pdf'], features['B_Morphological_Binary_L_cdf'], \
+    # features['B_Morphological_Binary_M_cdf'], features['B_Morphological_Binary_H_cdf'] = pyfeats.multilevel_binary_morphology_features(image, mask, N=30, thresholds=[25,50])
+    #% C. Histogram Based features
+    # features['C_Histogram'] =               pyfeats.histogram(image, mask, bins=32)
+    # features['C_MultiregionHistogram'] =    pyfeats.multiregion_histogram(image, mask, bins=32, num_eros=3, square_size=3)
+    # features['C_Correlogram'] =             pyfeats.correlogram(image, mask, bins_digitize=32, bins_hist=32, flatten=True)
+    #% D. Multi-Scale features
+    features['D_DWT'] =     pyfeats.dwt_features(image, mask, wavelet='bior3.3', levels=3)
+    features['D_SWT'] =     pyfeats.swt_features(image, mask, wavelet='bior3.3', levels=3)
+    features['D_WP'] =      pyfeats.wp_features(image, mask, wavelet='coif1', maxlevel=3)
+    features['D_GT'] =      pyfeats.gt_features(image, mask)
+    features['D_AMFM'] =    pyfeats.amfm_features(image)
+
+    #%% E. Other
+    features['E_HOG'] =             pyfeats.hog_features(image, ppc=8, cpb=3)
+    features['E_HuMoments'] =       pyfeats.hu_moments(image)
+    # features['E_TAS'] =             pyfeats.tas_features(image)
+    features['E_ZernikesMoments'] = pyfeats.zernikes_moments(image, radius=9)
+    # Try to make a data frame out of it
+    allFeatures, allLabels = [], []
+    for label, featureLabel in features.items():
+
+        if len(featureLabel) == 2:
+            allFeatures += featureLabel[0].tolist()
+            allLabels += featureLabel[1]
+        else:
+            assert len(featureLabel)%2 == 0
+            nFeature = int(len(featureLabel)/2)
+
+            allFeatures += list(itertools.chain.from_iterable(featureLabel[0:nFeature]))
+            allLabels += list(itertools.chain.from_iterable(featureLabel[nFeature:]))
+    return allFeatures, allLabels
 
 # Detectron2 Processes
 
