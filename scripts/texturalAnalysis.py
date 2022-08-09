@@ -10,6 +10,7 @@ import numpy as np
 from cellMorph import cellPerims
 from skimage.color import rgb2gray
 from skimage.measure import find_contours
+from skimage.io import imread
 import cv2
 
 import pyfeats
@@ -21,6 +22,7 @@ cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb")
 # Take subset of cells
 maxCells = 400
 cellSample = np.array(cells)[random.sample(range(len(cells)), 5000)]
+cellSample = [cell for cell in cellSample if cell.color != 'NaN']
 allFeatures, allLabels = [], []
 y = []
 c = 1
@@ -35,6 +37,8 @@ for cell in cellSample:
     mask = cell.mask
     a = np.where(mask==True)
     bbox = np.min(a[0]), np.max(a[0]), np.min(a[1]), np.max(a[1])
+
+    f = f[bbox[0]:bbox[1], bbox[2]:bbox[3]]
 
     # Stretches values to be in between 0 and 255
     # NOTE: Image must initial be bound between 0 and 1
