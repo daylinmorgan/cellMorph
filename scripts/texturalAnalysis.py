@@ -7,7 +7,7 @@ import pickle
 import random
 import numpy as np
 
-from cellMorphHelper import cellPerims
+from cellMorph import cellPerims
 from skimage.color import rgb2gray
 from skimage.measure import find_contours
 import cv2
@@ -29,7 +29,6 @@ c = 1
 for cell in cellSample:
     if cell.color == 'NaN':
         continue
-    print('\t{}'.format(cell.color))
     y.append(cell.color)
     print('Cell {}/{}'.format(c, len(cells)))
     f = rgb2gray(imread(cell.phaseContrast))
@@ -37,9 +36,12 @@ for cell in cellSample:
     a = np.where(mask==True)
     bbox = np.min(a[0]), np.max(a[0]), np.min(a[1]), np.max(a[1])
 
-    f = f[bbox[0]:bbox[1], bbox[2]:bbox[3]]
-    image = f*255
+    # Stretches values to be in between 0 and 255
+    # NOTE: Image must initial be bound between 0 and 1
+    image = f*255 
     mask = mask[bbox[0]:bbox[1], bbox[2]:bbox[3]].astype(int)
+    # Take only mask
+    image = np.multiply(image, mask)
 
     perimeter = cell.perimeter
 

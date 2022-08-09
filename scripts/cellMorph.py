@@ -5,6 +5,7 @@ Holds necessary structural information for storing cell information
 # %%
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 from skimage.io import imread
 from skimage.measure import find_contours
