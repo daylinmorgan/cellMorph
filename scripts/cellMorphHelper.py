@@ -50,9 +50,7 @@ from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
 from detectron2.utils.visualizer import ColorMode
-
 # %%
-
 # File Management
 
 def makeNewExperimentDirectory(experimentName):
@@ -88,6 +86,9 @@ def imSplit(im, nIms: int=16):
     Inputs:
     im: Image to be split
     nIms: Number of images (must be a perfect square)
+
+    Outputs:
+    List of split images
     """
     div = int(np.sqrt(nIms))
 
@@ -234,6 +235,29 @@ def getImageBase(imName):
     imageBase = '_'.join(imName.split('.')[0].split('_')[1:])
 
     return imageBase
+
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+
+    Credit: https://stackoverflow.com/questions/3173320/text-progress-bar-in-terminal-with-block-characters?noredirect=1&lq=1
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
 # Image processing 
 
 def segmentGreen(RGB):
