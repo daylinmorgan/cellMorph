@@ -216,8 +216,24 @@ def convertLabels(labelDir):
     saveName = os.path.join(labelDir, 'labels.pkl')
     pickle.dump(labels, open(saveName, "wb"))
 
+def getImageBase(imName):
+    """
+    Gets the "base" information of an image. 
+    Files should be named as follows:
+    imageType_Well_WellSection_Date.extension
 
+    The image base has no extension or image type
 
+    Inputs:
+    imName: String of image name
+
+    Outputs:
+    imageBase: The core information about the image's information in the incucyte
+    """
+
+    imageBase = '_'.join(imName.split('.')[0].split('_')[1:])
+
+    return imageBase
 # Image processing 
 
 def segmentGreen(RGB):
