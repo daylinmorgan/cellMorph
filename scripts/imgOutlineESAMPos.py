@@ -33,7 +33,7 @@ for imName in imNames:
     imBase = cellMorphHelper.getImageBase(imName)
     splitNum = imBase.split('_')[-1]
     well = imBase.split('_')[0]
-    if well != 'E2':
+    if well != 'D2':
         continue
     print(f'Processing {imName} \n')
     im = imread(os.path.join('../data', experiment, 'phaseContrast', imName))
@@ -51,10 +51,10 @@ for imName in imNames:
 
     # Save periodically
     if c % 100 == 0:
-        print('\t Saving at ../results/{}ESAMNeg.pickle'.format(experiment))
-        pickle.dump(cells, open('../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
+        print('\t Saving at ../results/{}ESAMPos.pickle'.format(experiment))
+        pickle.dump(cells, open('../results/{}ESAMPos.pickle'.format(experiment), "wb"))
 
-pickle.dump(cells, open('../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../results/{}ESAMPos.pickle'.format(experiment), "wb"))
 
 # %% Align red and green cells
 print('Aligning Perimeters')
@@ -69,4 +69,4 @@ for cell in cells[1:]:
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
-pickle.dump(cells, open('../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../results/{}ESAMPos.pickle'.format(experiment), "wb"))

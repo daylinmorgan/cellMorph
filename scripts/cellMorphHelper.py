@@ -5,31 +5,18 @@ cellMorphHelper.py contains various helper functions to aid analysis, such as se
 The functions can be split into roughly 3 categories:
 1. Helper functions for file management
 2. Helper functions for image processing/analysis
-3. Helper functions for Detectron2 processes
+3. Helper functions for more easily calling Detectron2 utilities such as visualization and classification
 """
 # %%
-import os
+# import some common libraries
 import shutil
 import cv2
 import numpy as np
 import pandas as pd
-import pickle
-
+import os
+import matplotlib.pyplot as plt
 import torch
 import detectron2
-
-# Some basic setup:
-# Setup detectron2 logger
-import detectron2
-from detectron2.utils.logger import setup_logger
-setup_logger()
-
-# import some common libraries
-import numpy as np
-import pandas as pd
-import os, json, cv2, random
-import matplotlib.pyplot as plt
-# %matplotlib inline
 
 from scipy.interpolate import interp1d
 from scipy.spatial import ConvexHull
@@ -50,6 +37,10 @@ from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
 from detectron2.utils.visualizer import ColorMode
+
+import detectron2
+from detectron2.utils.logger import setup_logger
+setup_logger()
 # %%
 # File Management
 
@@ -534,6 +525,29 @@ def extractFeatures(f, mask, perim):
             allLabels += list(itertools.chain.from_iterable(featureLabel[nFeature:]))
     return allFeatures, allLabels
 
+def alignPerimeters(cells: list):
+    """
+    Aligns a list of cells of class cellPerims
+    Inputs:
+    cells: A list of instances of cellPerims
+    Ouputs:
+    List with the instance variable perimAligned as an interpolated perimeter aligned
+    to the first instance in list.
+    """
+    referencePerim = cells[0].perimAligned.copy()
+    c = 1
+    for cell in cells:
+        currentPerim = cell.perimInt
+        
+        # Perform procrustes to align orientation (not scaled by size)
+        refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
+
+        # Put cell centered at origin
+        cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
+    return cells
+
+
+
 # Detectron2 Processes
 
 def viewPredictorResult(predictor, imPath: str):
@@ -546,6 +560,7 @@ def viewPredictorResult(predictor, imPath: str):
     None
     """
     im = imread(imPath)
+    imBase = getImageBase(imPath.split('/')[-1])
     outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
     v = Visualizer(im[:, :, ::-1],
                 #    metadata=cell_metadata, 
@@ -556,6 +571,7 @@ def viewPredictorResult(predictor, imPath: str):
     plt.figure()
     print("plotting")
     plt.imshow(out.get_image()[:,:,::-1])
+    plt.title(imBase)
     plt.show()
 
 def getSegmentModel(modelPath: str):
