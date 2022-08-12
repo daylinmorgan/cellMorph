@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from skimage.io import imread
 from skimage.measure import find_contours
 
-from cellMorphHelper import findFluorescenceColor
+import cellMorphHelper
 # %%
 class cellPerims:
     """
@@ -20,17 +20,17 @@ class cellPerims:
         self.experiment = experiment
         self.imageBase = imageBase
         self.splitNum = splitNum
-        fname = imageBase+'_'+str(splitNum)+'.png'
+        fname = imageBase+'.png'
         self.phaseContrast = os.path.join('../data', experiment, 'phaseContrast','phaseContrast_'+fname)
         self.composite = os.path.join('../data', experiment, 'composite', 'composite_'+fname)
         self.mask = mask
 
         self.perimeter = self.findPerimeter()
 
-        self.color = findFluorescenceColor(self.composite, self.mask)
+        self.color = cellMorphHelper.findFluorescenceColor(self.composite, self.mask)
 
         self.perimAligned = ''
-        self.perimInt = ''
+        self.perimInt = cellMorphHelper.interpolatePerimeter(self.perimeter)
 
     def imshow(self):
         RGB = imread(self.composite)

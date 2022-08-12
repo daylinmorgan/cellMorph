@@ -553,7 +553,10 @@ def viewPredictorResult(predictor, imPath: str):
                    instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
     )
     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+    plt.figure()
+    print("plotting")
     plt.imshow(out.get_image()[:,:,::-1])
+    plt.show()
 
 def getSegmentModel(modelPath: str):
     """

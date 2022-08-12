@@ -96,7 +96,7 @@ def getCellDicts(expDir, stage):
 if "cellMorph_train" in DatasetCatalog:
     DatasetCatalog.remove("cellMorph_train")
     
-expDir = '../data/AG2021Split16'
+expDir = '../data/TJ2201Split16'
 stage = 'train'
 
 inputs = [expDir, stage]
@@ -107,7 +107,7 @@ DatasetCatalog.register("cellMorph_" + "train", lambda x=inputs: getCellDicts(in
 MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["red", "green"])
 cell_metadata = MetadataCatalog.get("cellMorph_train")
 
-expDir = '../data/AG2021Split16'
+expDir = '../data/TJ2201Split16'
 stage = 'val'
 
 inputs = [expDir, stage]
@@ -147,7 +147,7 @@ from detectron2.utils.visualizer import ColorMode
 
 dataset_dicts = getCellDicts(inputs[0], inputs[1])
 # %%
-expDir = '../data/AG2021Split16'
+expDir = '../data/TJ2201Split16'
 stage = 'val'
 
 inputs = [expDir, stage]

@@ -1,6 +1,6 @@
 # %%
 import sys, importlib
-importlib.reload(sys.modules['cellMorphHelper'])
+# importlib.reload(sys.modules['cellMorphHelper'])
 
 from cellMorphHelper import splitExpIms, getSegmentModel, viewPredictorResult
 import random
@@ -18,6 +18,10 @@ nIms = 16
 pcPath = os.path.join('../data/'+experiment+'Split'+str(nIms), 'phaseContrast')
 ims = os.listdir(pcPath)
 
+random.seed(1234)
 for imNum in random.sample(range(len(ims)), 3):
     imPath = os.path.join(pcPath, ims[imNum])
     viewPredictorResult(predictor, imPath)
+# %%
+viewPredictorResult(predictor, '../data/TJ2201Split16/phaseContrast/phaseContrast_D2_1_2022y04m09d_04h00m_14.png')
+
