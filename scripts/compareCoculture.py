@@ -7,23 +7,31 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import umap
+
+from skimage.io import imread
+
+from sklearn.cluster import KMeans
 # %%
-esamNeg=pickle.load(open('../results/TJ2201Split16ESAMNeg.pickle',"rb"))
-coculture=pickle.load(open('../results/TJ2201Split16CellPerims.pickle',"rb"))
+esamNeg = pickle.load(open('../results/TJ2201Split16ESAMNeg.pickle',"rb"))
+esamPos = pickle.load(open('../results/TJ2201Split16ESAMPos.pickle',"rb"))
+coculture = pickle.load(open('../results/TJ2201Split16CellPerims.pickle',"rb"))
 
 # %%
 # Subset some cells
 random.seed(1234)
 coculturePerm = random.sample(range(len(coculture)), len(coculture))
 esamNegPerm = random.sample(range(len(esamNeg)), len(esamNeg))
-
+esamPosPerm = random.sample(range(len(esamPos)), len(esamPos))
 nDesired = 5000
 
-cocultureSub = [coculture[x] for x in coculturePerm if coculture[x].color=='red']
+cocultureSub = [coculture[x] for x in coculturePerm if coculture[x].color!='NaN']
 esamNegSub = [esamNeg[x] for x in esamNegPerm if esamNeg[x].color=='red']
+esamPosSub = [esamPos[x] for x in esamPosPerm if esamPos[x].color=='green']
 
 cocultureSub = cocultureSub[0:nDesired]
 esamNegSub = esamNegSub[0:nDesired]
+esamPosSub = esamPosSub[0:nDesired]
+
 origPerim = cocultureSub[0].perimAligned.copy()
 
 # %% Align perimeters to each other
@@ -36,32 +44,139 @@ for cell in cocultureSub:
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
+for cell in esamPosSub:
+    currentPerim = cell.perimInt
+    
+    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
+
+    cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
+   
 # %% Build dataframe
-labels = ['coculture' for x in range(len(cocultureSub))]+['monoculture' for x in range(len(esamNegSub))]
+labels = ['Coculture ESAM +' if x.color == 'red' else 'Coculture ESAM -' for x in cocultureSub]+ \
+['Monoculture ESAM -' for x in range(len(esamNegSub))]+ \
+['Monoculture ESAM +' for x in range(len(esamPosSub))]
 
-y = [1 if x=='coculture' else 0 for x in labels]
+label2Color = {'Monoculture ESAM -': 'red', 'Monoculture ESAM +': 'green', \
+    'Coculture ESAM -': 'gold', 'Coculture ESAM +': 'purple'}
+y = []
+for label in labels:
+    y.append(label2Color[label])
 
-allCells = cocultureSub+esamNegSub
+allCells = cocultureSub+esamNegSub+esamPosSub
 X = []
 for cell in allCells:
     X.append(cell.perimAligned.ravel())
-
-X = pd.DataFrame(X)
+X = np.array(X)
+# X = pd.DataFrame(X)
 
 # %% UMAP
 fit = umap.UMAP()
 u = fit.fit_transform(X)
 # %%
-plt.scatter(u[:,0], u[:,1], s=2, c=y)
-plt.xlabel('UMAP 1')
-plt.ylabel('UMAP 2')
-plt.title('ESAM Coculture UMAP')
+fontSize = 20
+fig, ax = plt.subplots()
+fig.set_size_inches(6, 6)
+
+
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+for label in np.unique(labels):
+    labelIdx = np.where(np.array(labels)==label)
+    ux = u[labelIdx,0]
+    uy = u[labelIdx,1]
+    ax.scatter(ux, uy, s=5, c=label2Color[label], alpha=0.5, label=label)
+
+ax.set_xlabel('UMAP 1')
+ax.set_ylabel('UMAP 2')
+ax.set_title('ESAM Morphology')
+ax.xaxis.set_ticklabels([])
+ax.yaxis.set_ticklabels([])
+ax.title.set_size(      fontSize)
+ax.xaxis.label.set_size(fontSize)
+ax.yaxis.label.set_size(fontSize)
+ax.legend(markerscale=4)
+ax.set_yticks([])
+ax.set_xticks([])
+fig.savefig('../results/figs/esamCoMonoUMAP.png', dpi=600)
+# %%
+cell = allCells[251]
+mask = cell.mask
+a = np.where(mask==True)
+bbox = np.min(a[0]), np.max(a[0]), np.min(a[1]), np.max(a[1])
+im = imread(cell.composite)
+im = im[bbox[0]:bbox[1], bbox[2]:bbox[3]]
+
+fig, ax = plt.subplots(2,2)
+fig.set_size_inches(6, 6)
+ax[0,0].imshow(im, origin='lower')
+ax[0,0].xaxis.set_ticklabels([])
+ax[0,0].yaxis.set_ticklabels([])
+ax[0,0].set_yticks([])
+ax[0,0].set_xticks([])
+ax[0,0].set_title('Identify Cell')
+ax[0,0].set_box_aspect(1)
+
+ax[0,1].plot(cell.perimeter[:,0], cell.perimeter[:,1])
+ax[0,1].xaxis.set_ticklabels([])
+ax[0,1].yaxis.set_ticklabels([])
+ax[0,1].set_yticks([])
+ax[0,1].set_xticks([])
+ax[0,1].set_title('Find Perimeter')
+ax[0,1].set_box_aspect(1)
+
+pI = cell.perimInt.copy()
+pI = pI - np.mean(pI, axis = 0)
+ax[1,0].scatter(pI[:,0], pI[:,1], s = 0.5)
+ax[1,0].set_xlim([-18,18])
+ax[1,0].set_ylim([-18,18])
+ax[1,0].xaxis.set_ticklabels([])
+ax[1,0].yaxis.set_ticklabels([])
+ax[1,0].set_yticks([])
+ax[1,0].set_xticks([])
+ax[1,0].set_title('Interpolate Perimeter')
+ax[1,0].set_box_aspect(1)
+
+ax[1,1].scatter(cell.perimAligned[:,0], cell.perimAligned[:,1], s = 0.5)
+ax[1,1].set_xlim([-20,20])
+ax[1,1].set_ylim([-18,18])
+ax[1,1].xaxis.set_ticklabels([])
+ax[1,1].yaxis.set_ticklabels([])
+ax[1,1].set_yticks([])
+ax[1,1].set_xticks([])
+ax[1,1].set_title('Align and Center')
+ax[1,1].set_box_aspect(1)
+
+fig.savefig('../results/figs/perimeterFeatureMethod.png', dpi=600)
+# %%
+esamNegIdx = np.where(np.array(labels) == 'Monoculture ESAM -')[0]
+esamPosIdx = np.where(np.array(labels) == 'Monoculture ESAM +')[0]
+esamCoPosIdx = np.where(np.array(labels) == 'Coculture ESAM +')[0]
+esamCoNegIdx = np.where(np.array(labels) == 'Coculture ESAM -')[0]
+
+
+XNeg = X[esamNegIdx, :]
+XPos = X[esamPosIdx, :]
+XCoPos = X[esamCoPosIdx, :]
+XCoNeg = X[esamCoNegIdx, :]
+
+avgPos = np.mean(XPos, axis=0)
+avgNeg = np.mean(XNeg, axis=0)
+avgCoPos = np.mean(XCoPos, axis=0)
+avgCoNeg = np.mean(XCoNeg, axis=0)
+
+fig, ax = plt.subplots(2,2)
+fig.set_size_inches(12, 6)
+ax[0,0].scatter(avgPos[::2], avgPos[1::2], s=5 , c = 'green')
+ax[0,1].scatter(avgNeg[::2], avgNeg[1::2], s=5 , c = 'red')
+ax[1,0].scatter(avgCoPos[::2], avgCoPos[1::2], s=5 , c = 'green')
+ax[1,1].scatter(avgCoNeg[::2], avgCoNeg[1::2], s=5 , c = 'red')
 
 # %% Quick and dirty logistic regression
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.model_selection import train_test_split
+# from sklearn.metrics import roc_auc_score
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1234)
-clf = LogisticRegression(solver="liblinear", random_state=1234, C=1e-6,max_iter=1e7).fit(X_train, y_train)
-roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1234)
+# clf = LogisticRegression(solver="liblinear", random_state=1234, C=1e-6,max_iter=1e7).fit(X_train, y_train)
+# roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])

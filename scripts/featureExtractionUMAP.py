@@ -9,7 +9,7 @@ import numpy
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
-# from cellMorph import cellPerims
+import cellMorphHelper
 # %%
 experiment = 'TJ2201Split16'
 cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
@@ -19,7 +19,6 @@ redCells, greenCells = [], []
 
 for cell in cells:
     # Align all perimeters
-    cell.perimInt = interpolatePerimeter(cell.perimeter)
     # Add to appropriate list
     if cell.color == 'red':
         redCells.append(cell)
@@ -28,21 +27,21 @@ for cell in cells:
 
 # Align green cells
 greenCells[0].perimAligned = greenCells[0].perimInt - np.mean(greenCells[0].perimInt, axis=0)
-referencePerim = greenCells[0].perimAligned
+referencePerim = greenCells[0].perimAligned.copy()
 
 c = 1
-for cell in greenCells[1:]:
+for cell in greenCells:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim)
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 # Align red cells
+# referencePerim = greenCells[0].perimAligned
 for cell in redCells:
-    referencePerim = greenCells[0].perimAligned
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim)
+    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
@@ -57,8 +56,16 @@ for cell in cells:
 
 cellPerims = pd.DataFrame(cellPerims)
 
-pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
+# pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
 # cellPerims['color'] = cellColors
+# %% 
+referencePerim = cells[0].perimAligned
+for cell in range(len(cells)):
+    currentPerim = cells[cell].perimInt
+    
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
+
+    cells[cell].perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 # %%
 # colors = perims['color']
 # perims.drop('color', inplace=True, axis=1)
@@ -66,10 +73,17 @@ pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb
 cellPerims2 = cellPerims.copy()
 r = random.sample(range(cellPerims2.shape[0]), 10000)
 # %%
-fit = umap.UMAP()
-u = fit.fit_transform(cellPerims2)
+X = []
+y = []
+for cell in cells:
+    if cell.color != 'NaN':
+        X.append(cell.perimAligned.ravel())
+        y.append(cell.color)
 # %%
-plt.scatter(u[:,0], u[:,1], s=1, c=cellColors2)
+fit = umap.UMAP()
+u = fit.fit_transform(X)
+# %%
+plt.scatter(u[:,0], u[:,1], s=1, c=y)
 plt.xlabel('UMAP 1')
 plt.ylabel('UMAP 2')
 plt.title('ESAM +/- Perimeter UMAP')
