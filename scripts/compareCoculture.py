@@ -99,6 +99,39 @@ ax.legend(markerscale=4)
 ax.set_yticks([])
 ax.set_xticks([])
 fig.savefig('../results/figs/esamCoMonoUMAP.png', dpi=600)
+# %% TSNE
+from sklearn.decomposition import PCA
+pca = PCA(n_components=3)
+pca.fit(X)
+pcax = pca.fit_transform(X)
+
+# %%
+fontSize = 20
+fig, ax = plt.subplots()
+fig.set_size_inches(6, 6)
+
+
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+for label in np.unique(labels):
+    labelIdx = np.where(np.array(labels)==label)
+    ux = pcax[labelIdx,0]
+    uy = pcax[labelIdx,1]
+    ax.scatter(ux, uy, s=5, c=label2Color[label], alpha=0.5, label=label)
+
+ax.set_xlabel('PCA 1')
+ax.set_ylabel('PCA 2')
+ax.set_title('ESAM Morphology')
+ax.xaxis.set_ticklabels([])
+ax.yaxis.set_ticklabels([])
+ax.title.set_size(      fontSize)
+ax.xaxis.label.set_size(fontSize)
+ax.yaxis.label.set_size(fontSize)
+ax.legend(markerscale=4)
+ax.set_yticks([])
+ax.set_xticks([])
+fig.savefig('../results/figs/esamCoMonoPCA.png', dpi=600)
 # %%
 cell = allCells[251]
 mask = cell.mask
@@ -173,10 +206,17 @@ ax[1,0].scatter(avgCoPos[::2], avgCoPos[1::2], s=5 , c = 'green')
 ax[1,1].scatter(avgCoNeg[::2], avgCoNeg[1::2], s=5 , c = 'red')
 
 # %% Quick and dirty logistic regression
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.model_selection import train_test_split
-# from sklearn.metrics import roc_auc_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1234)
-# clf = LogisticRegression(solver="liblinear", random_state=1234, C=1e-6,max_iter=1e7).fit(X_train, y_train)
-# roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
+monoIdx = [1 if 'mono' in label.lower() else 0 for label in labels]
+monoIdx = np.array(monoIdx) == 1
+XMono = X[monoIdx,:]
+yMono = np.array(labels)[monoIdx]
+
+df = pd.DataFrame(pcaxMono)
+
+X_train, X_test, y_train, y_test = train_test_split(XMono, yMono, test_size=0.33, random_state=1234)
+clf = LogisticRegression(solver="liblinear", random_state=1234, C=1e-6,max_iter=1e7).fit(X_train, y_train)
+roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])

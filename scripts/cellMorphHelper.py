@@ -17,6 +17,7 @@ import os
 import matplotlib.pyplot as plt
 import torch
 import detectron2
+import datetime
 
 from scipy.interpolate import interp1d
 from scipy.spatial import ConvexHull
@@ -226,6 +227,24 @@ def getImageBase(imName):
     imageBase = '_'.join(imName.split('.')[0].split('_')[1:])
 
     return imageBase
+
+def convertDate(date):
+    """
+    Returns a python datetime format of the Incucyte date format
+    NOTE: This is very hardcoded and relies on a specific format. 
+
+    Input example: 2022y04m11d_00h00m
+    Output example: 2022-04-11 00:00:00
+    """
+    year =      int(date[0:4])
+    month =     int(date[5:7])
+    day =       int(date[8:10])
+    hour =      int(date[12:14])
+    minute =    int(date[15:17])
+
+    date = datetime.datetime(year,month,day,hour,minute)
+
+    return date
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     """

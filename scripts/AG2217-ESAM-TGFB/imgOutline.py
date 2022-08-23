@@ -4,6 +4,7 @@ This script loads all images and saves their outlines.
 """
 # %%
 import sys, importlib
+sys.path.append('../')
 # importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
 import os
@@ -22,11 +23,11 @@ from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.visualizer import ColorMode
 
 # %%    
-predictor = getSegmentModel('../output/AG2021Split16')
+predictor = getSegmentModel('../../output/AG2021Split16')
 # %% Find masks for experiment
 experiment = 'TJ2201Split16'
 print('Starting Experiment: {}'.format(experiment))
-ims = os.listdir(os.path.join('../data',experiment, 'phaseContrast'))
+ims = os.listdir(os.path.join('../../data',experiment, 'phaseContrast'))
 imbases = ['_'.join(im.split('.')[0].split('_')[1:-1]) for im in ims]
 splitNums = [int(im.split('.')[0].split('_')[-1]) for im in ims]
 
@@ -37,7 +38,7 @@ c = 1
 for imbase, splitNum in zip(imbases, splitNums):
     fname = 'phaseContrast_'+imbase+'_'+str(splitNum)+'.png'
     print('{}/{} Img: {}'.format(c, len(imbases), fname))
-    imPath = os.path.join('../data',experiment,'phaseContrast',fname)
+    imPath = os.path.join('../../data',experiment,'phaseContrast',fname)
     im = imread(imPath)
     outputs = predictor(im)['instances'].to("cpu")
     nCells = len(outputs)
@@ -53,9 +54,9 @@ for imbase, splitNum in zip(imbases, splitNums):
     # Save periodically
     if c % 100 == 0:
         print('\t Saving at ../results/{}CellPerims.pickle'.format(experiment))
-        pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
+        pickle.dump(cells, open('../../results/{}CellPerims.pickle'.format(experiment), "wb"))
 
-pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../../results/{}CellPerims.pickle'.format(experiment), "wb"))
 # %% Align green and red cells to reference cell so that they are all the same orientation
 redCells, greenCells = [], []
 
@@ -88,6 +89,6 @@ for cell in redCells:
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 # Write altered cell perimeters
-pickle.dump(cells, open('../results/{}CellPerims.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../../results/{}CellPerims.pickle'.format(experiment), "wb"))
 
 # %%
