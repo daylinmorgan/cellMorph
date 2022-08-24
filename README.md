@@ -54,3 +54,11 @@ Files are named like so:
 
 Where `Directory` is the immediate directory, and `Base Information` is the output from the Incucyte (`Well_Im#_Date`). 
 
+## Envisioned Workflow
+A primary objective of this project is take code from Incucyte to analysis as soon as possible. When starting a new experiment on a trained model, data should be downloaded from the Incucyte and uploaded to the computing server. After this, the outlines can be gathered by running:
+
+```
+python imgOutline.py <experiment>
+```
+
+This should should split the images, then log the information into a list stored in .pickle format. To ease memory concerns, these are then split by well in `results`. 
