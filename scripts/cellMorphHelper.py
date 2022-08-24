@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import torch
 import detectron2
 import datetime
+import random
 
 from scipy.interpolate import interp1d
 from scipy.spatial import ConvexHull
@@ -142,7 +143,6 @@ def splitExpIms(experiment, nIms=16):
         for imName in imNames:
             # Read and split mask
             im = cv2.imread(os.path.join(dataDir, 'phaseContrast', imName))
-            print('\t {}'.format(imName))
             tiles = imSplit(im, nIms)
 
             # For each mask append a number, then save it
@@ -524,7 +524,7 @@ def extractFeatures(f, mask, perim):
     features['D_GT'] =      pyfeats.gt_features(image, mask)
     features['D_AMFM'] =    pyfeats.amfm_features(image)
 
-    #%% E. Other
+    #% E. Other
     features['E_HOG'] =             pyfeats.hog_features(image, ppc=8, cpb=3)
     features['E_HuMoments'] =       pyfeats.hu_moments(image)
     # features['E_TAS'] =             pyfeats.tas_features(image)
@@ -544,26 +544,7 @@ def extractFeatures(f, mask, perim):
             allLabels += list(itertools.chain.from_iterable(featureLabel[nFeature:]))
     return allFeatures, allLabels
 
-def alignPerimeters(cells: list):
-    """
-    Aligns a list of cells of class cellPerims
-    Inputs:
-    cells: A list of instances of cellPerims
-    Ouputs:
-    List with the instance variable perimAligned as an interpolated perimeter aligned
-    to the first instance in list.
-    """
-    referencePerim = cells[0].perimAligned.copy()
-    c = 1
-    for cell in cells:
-        currentPerim = cell.perimInt
-        
-        # Perform procrustes to align orientation (not scaled by size)
-        refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
 
-        # Put cell centered at origin
-        cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
-    return cells
 
 
 
