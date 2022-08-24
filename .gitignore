@@ -3,3 +3,4 @@ data/
 output/
 .ipynb_checkpoints/
 results/
+.vscode/
