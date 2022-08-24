@@ -1,6 +1,5 @@
 # %%
 import sys, importlib
-sys.path.append('../')
 # importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
 import os
@@ -19,11 +18,21 @@ from skimage.segmentation import clear_border
 from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.visualizer import ColorMode
 # %%    
-predictor = cellMorphHelper.getSegmentModel('../../output/AG2021Split16')
+predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
 # %%
-experiment = 'TJ2201Split16'
+experiment = 'AG2217-ESAM-TGFB'
+
+# Check if split images exist
+if not os.path.isdir(os.path.join('../data', experiment+'Split16')):
+    print('Experiment is unsplit, splitting...')
+    cellMorphHelper.splitExpIms(experiment)
+else:
+    print('Experiment has been split')
+    experiment = experiment+'Split16'
+# %%
+
 print('Starting Experiment: {}'.format(experiment))
-imNames = os.listdir(os.path.join('../../data',experiment, 'phaseContrast'))
+imNames = os.listdir(os.path.join('../data',experiment, 'phaseContrast'))
 
 cells = []
 
@@ -34,10 +43,8 @@ for imName in imNames:
     imBase = cellMorphHelper.getImageBase(imName)
     splitNum = imBase.split('_')[-1]
     well = imBase.split('_')[0]
-    if well != 'E2':
-        continue
     print(f'Processing {imName} \n')
-    im = imread(os.path.join('../../data', experiment, 'phaseContrast', imName))
+    im = imread(os.path.join('../data', experiment, 'phaseContrast', imName))
 
     outputs = predictor(im)['instances'].to("cpu")
     nCells = len(outputs)
@@ -47,15 +54,12 @@ for imName in imNames:
         mask = clear_border(mask)
         if np.sum(mask)>10:
             cells.append(cellPerims(experiment, imBase, splitNum, mask))
-
-    cellMorphHelper.printProgressBar(c, total = len(imNames), length = 50)
-
     # Save periodically
     if c % 100 == 0:
-        print('\t Saving at ../results/{}ESAMNeg.pickle'.format(experiment))
-        pickle.dump(cells, open('../../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
+        print('\t Saving at ../results/{}.pickle'.format(experiment))
+        pickle.dump(cells, open('../results/{}.pickle'.format(experiment), "wb"))
 
-pickle.dump(cells, open('../../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../results/{}.pickle'.format(experiment), "wb"))
 
 # %% Align red and green cells
 print('Aligning Perimeters')
@@ -70,4 +74,4 @@ for cell in cells[1:]:
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
-pickle.dump(cells, open('../../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../results/{}ESAMNeg.pickle'.format(experiment), "wb"))

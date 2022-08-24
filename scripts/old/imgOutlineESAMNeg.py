@@ -19,11 +19,11 @@ from skimage.segmentation import clear_border
 from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.visualizer import ColorMode
 # %%    
-predictor = cellMorphHelper.getSegmentModel('../../output/AG2021Split16')
+predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
 # %%
 experiment = 'TJ2201Split16'
 print('Starting Experiment: {}'.format(experiment))
-imNames = os.listdir(os.path.join('../../data',experiment, 'phaseContrast'))
+imNames = os.listdir(os.path.join('../data',experiment, 'phaseContrast'))
 
 cells = []
 
@@ -34,10 +34,10 @@ for imName in imNames:
     imBase = cellMorphHelper.getImageBase(imName)
     splitNum = imBase.split('_')[-1]
     well = imBase.split('_')[0]
-    if well != 'D2':
+    if well != 'E2':
         continue
     print(f'Processing {imName} \n')
-    im = imread(os.path.join('../../data', experiment, 'phaseContrast', imName))
+    im = imread(os.path.join('../data', experiment, 'phaseContrast', imName))
 
     outputs = predictor(im)['instances'].to("cpu")
     nCells = len(outputs)
@@ -52,10 +52,10 @@ for imName in imNames:
 
     # Save periodically
     if c % 100 == 0:
-        print('\t Saving at ../results/{}ESAMPos.pickle'.format(experiment))
-        pickle.dump(cells, open('../../results/{}ESAMPos.pickle'.format(experiment), "wb"))
+        print('\t Saving at ../results/{}ESAMNeg.pickle'.format(experiment))
+        pickle.dump(cells, open('../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
 
-pickle.dump(cells, open('../../results/{}ESAMPos.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
 
 # %% Align red and green cells
 print('Aligning Perimeters')
@@ -70,4 +70,4 @@ for cell in cells[1:]:
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
-pickle.dump(cells, open('../../results/{}ESAMPos.pickle'.format(experiment), "wb"))
+pickle.dump(cells, open('../results/{}ESAMNeg.pickle'.format(experiment), "wb"))
