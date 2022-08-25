@@ -20,7 +20,8 @@ class cellPerims:
         self.experiment = experiment
         self.imageBase = imageBase
         self.splitNum = splitNum
-        fname = imageBase+'.png'
+        fname = imageBase+str(splitNum)+'.png'
+        print(fname)
         self.phaseContrast = os.path.join('../data', experiment, 'phaseContrast','phaseContrast_'+fname)
         self.composite = os.path.join('../data', experiment, 'composite', 'composite_'+fname)
         self.mask = mask
