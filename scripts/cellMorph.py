@@ -32,6 +32,11 @@ class cellPerims:
         self.perimAligned = ''
         self.perimInt = cellMorphHelper.interpolatePerimeter(self.perimeter)
 
+        self.well = imageBase.split('_')[0]
+        date = imageBase.split('_')[2:-1]
+        assert 'y' in date[0], 'No year in date, check to make sure it is a split image'
+        date = '_'.join(date)
+        self.date = cellMorphHelper.convertDate(date)
     def imshow(self):
         RGB = imread(self.composite)
         mask = self.mask
