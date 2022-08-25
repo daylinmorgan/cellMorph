@@ -1,8 +1,9 @@
+# %%
 
-#!/usr/bin/python3
+# !/usr/bin/python3
 # %%
 import sys, importlib
-# importlib.reload(sys.modules['cellMorphHelper'])
+importlib.reload(sys.modules['cellMorph'])
 import pickle
 import os
 import cv2
@@ -52,10 +53,11 @@ def alignPerimeters(cells: list):
         # Put cell centered at origin
         cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
     return cells
-# %%    
+# %%
 predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
 # %% Find masks for experiment
-experiment = sys.argv[1]
+# experiment = sys.argv[1]
+experiment = 'TJ2201'
 
 # Check if split images exist
 if not os.path.isdir(os.path.join('../data', experiment+'Split16')):
@@ -127,3 +129,4 @@ for well in wellDict.keys():
     print(saveFile)
     pickle.dump(wellDict[well], open(saveFile, "wb"))
 # %%
+fname
