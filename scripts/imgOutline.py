@@ -1,9 +1,9 @@
 # %%
 
-# !/usr/bin/python3
+!/usr/bin/python3
 # %%
 import sys, importlib
-importlib.reload(sys.modules['cellMorph'])
+# importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
 import os
 import cv2
@@ -56,8 +56,7 @@ def alignPerimeters(cells: list):
 # %%
 predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
 # %% Find masks for experiment
-# experiment = sys.argv[1]
-experiment = 'TJ2201'
+experiment = sys.argv[1]
 
 # Check if split images exist
 if not os.path.isdir(os.path.join('../data', experiment+'Split16')):
@@ -65,6 +64,9 @@ if not os.path.isdir(os.path.join('../data', experiment+'Split16')):
     cellMorphHelper.splitExpIms(experiment)
 else:
     print('Experiment has been split')
+
+# Validate experiment
+cellMorphHelper.validateExperimentData(experiment)
 experiment = experiment+'Split16'
 
 # Make a results directory
@@ -91,7 +93,7 @@ for imbase, splitNum in zip(imbases, splitNums):
     for cellNum in range(nCells):
         mask = outputs[cellNum].pred_masks.numpy()[0]
         # Don't use cells that are on the border for grabbing perimeter information
-        # TODO: Merge entire images
+        # TODO: Merge all images
         mask = clear_border(mask)
         # Check that cell is not just some artifact
         if np.sum(mask)>10:
@@ -102,9 +104,9 @@ for imbase, splitNum in zip(imbases, splitNums):
     if c % 100 == 0:
         print(f'Saving at ../results/{experiment}.pickle')
         pickle.dump(cells, open(os.path.join(resDir, f"{experiment}.pickle"), "wb"))
-
 pickle.dump(cells, open(os.path.join(resDir, f'{experiment}.pickle'), "wb"))
-
+# %%
+cells = pickle.load(open(os.path.join(resDir, f'{experiment}.pickle'),"rb"))
 # Align cells
 print('Aligning Cells')
 cells = alignPerimeters(cells)
@@ -112,6 +114,7 @@ cells = alignPerimeters(cells)
 # Split into wells and save results
 
 # Get unique wells
+wells = []
 for cell in cells:
     well = cell.imageBase.split('_')[0]
     wells.append(well)
@@ -125,8 +128,7 @@ for cell in cells:
 
 
 for well in wellDict.keys():
-    saveFile = f'{saveDir}-{well}.pickle'
+    saveFile = os.path.join(resDir, f'{experiment}-{well}.pickle')
     print(saveFile)
     pickle.dump(wellDict[well], open(saveFile, "wb"))
 # %%
-fname
