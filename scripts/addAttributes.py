@@ -7,7 +7,7 @@ import pickle
 import cellMorph
 import cellMorphHelper
 # %%
-file = '../results/TJ2201Split16ESAMPos.pickle'
+file = '../results/AG2217-ESAM-TGFB/AG2217-ESAM-TGFB.pickle'
 cells=pickle.load(open(file,"rb"))
 # coculture=pickle.load(open('../results/TJ2201Split16CellPerims.pickle',"rb"))
 # %%

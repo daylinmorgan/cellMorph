@@ -144,7 +144,7 @@ def splitExpIms(experiment, nIms=16):
             # Read and split mask
             im = cv2.imread(os.path.join(dataDir, 'phaseContrast', imName))
             tiles = imSplit(im, nIms)
-
+            print(f'{imName}')
             # For each mask append a number, then save it
             for num, im in enumerate(tiles):
                 newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
@@ -161,7 +161,7 @@ def splitExpIms(experiment, nIms=16):
             # Read and split mask
             im = cv2.imread(os.path.join(dataDir, 'composite', imName))
             tiles = imSplit(im, nIms)
-
+            print(f'{imName}')
             # For each mask append a number, then save it
             for num, im in enumerate(tiles):
                 newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
@@ -544,10 +544,36 @@ def extractFeatures(f, mask, perim):
             allLabels += list(itertools.chain.from_iterable(featureLabel[nFeature:]))
     return allFeatures, allLabels
 
+# Testing
+def validateExperimentData(experiment, splitNum=16):
+    """
+    Ensures that an experiment is properly set up without errant files. 
+    Checks that:
+    Experiment is split with a phase contrast and composite directory
+    All files are .png format
+    Each phase contrast has a composite twin
+    """
+    experiment+=f'Split{splitNum}'
+    # Check that experiment folder is in proper format
+    assert os.path.isdir(os.path.join('../data', experiment)), 'Split experiment before verifying'
+    assert os.path.isdir(os.path.join('../data', experiment, 'phaseContrast')), 'No phase contrast directory'
+    assert os.path.isdir(os.path.join('../data', experiment,'composite')), 'No composite directory'
 
+    # Check that files are of correct extension
+    phaseContrastFiles = os.listdir(os.path.join('../data', experiment, 'phaseContrast'))
+    compositeFiles =     os.listdir(os.path.join('../data', experiment, 'composite'))
 
+    phaseImageBases = []
+    for phaseContrastFile in phaseContrastFiles:
+        phaseImageBases.append(getImageBase(phaseContrastFile))
+        assert phaseContrastFile.split('.')[-1] == 'png', f'Non .png file found:\n {phaseContrastFile}'
 
+    for compositeFile in compositeFiles:
+        imageBase = getImageBase(phaseContrastFile)
+        assert compositeFile.split('.')[-1] == 'png', f'Non .png file found:\n {compositeFile}'
+        assert imageBase in phaseImageBases, f'Composite file not in phase contrast files {compositeFile}'
 
+    print('Experimental data is in proper format!')
 # Detectron2 Processes
 
 def viewPredictorResult(predictor, imPath: str):

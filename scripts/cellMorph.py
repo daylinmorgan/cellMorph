@@ -20,8 +20,7 @@ class cellPerims:
         self.experiment = experiment
         self.imageBase = imageBase
         self.splitNum = splitNum
-        fname = imageBase+str(splitNum)+'.png'
-        print(fname)
+        fname = imageBase+'_'+str(splitNum)+'.png'
         self.phaseContrast = os.path.join('../data', experiment, 'phaseContrast','phaseContrast_'+fname)
         self.composite = os.path.join('../data', experiment, 'composite', 'composite_'+fname)
         self.mask = mask
@@ -34,7 +33,7 @@ class cellPerims:
         self.perimInt = cellMorphHelper.interpolatePerimeter(self.perimeter)
 
         self.well = imageBase.split('_')[0]
-        date = imageBase.split('_')[2:-1]
+        date = imageBase.split('_')[2:]
         assert 'y' in date[0], 'No year in date, check to make sure it is a split image'
         date = '_'.join(date)
         self.date = cellMorphHelper.convertDate(date)
