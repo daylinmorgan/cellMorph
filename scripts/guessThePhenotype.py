@@ -1,3 +1,7 @@
+# %% [markdown]
+# # Guess the Phenotype
+# ## Run all cells until prompted
+
 # %%
 import cellMorph
 
@@ -129,6 +133,10 @@ def askQuestion(cell):
         if answer in ['red', 'green', 'quit']:
             break
     return answer
+# %% [markdown]
+# # Guess the Phenotype Game
+# ### This next cell will ask you to guess the phenotype, simply type in and record your answers
+
 # %%
 # %matplotlib inline
 from IPython import display
@@ -173,6 +181,10 @@ for cell in cellsGuess:
     if answer == 'quit':
         break
 
+# %% [markdown]
+# # Ready to see how you did?
+# ### The next cell will show you how many answers you got right. It will also show you the cell in isolation, with a light masking layer, and in context with the othe
+
 # %%
 correctAnswers = 0
 for i in range(len(playersAnswers)):
@@ -182,6 +194,6 @@ for i in range(len(playersAnswers)):
     if playersAnswers[i] == cellsGuess[i].color:
         correctAnswers += 1
 print(f'You got {correctAnswers} correct out of {i}')
-    
+
 
 # %%
