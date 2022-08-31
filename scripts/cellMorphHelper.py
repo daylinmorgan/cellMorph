@@ -28,7 +28,7 @@ from skimage import measure
 from skimage import img_as_float
 from skimage.color import rgb2hsv
 from skimage.io import imread
-
+from skimage.morphology import binary_dilation
 import pyfeats
 
 # import some common detectron2 utilities
@@ -269,6 +269,18 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 # Image processing 
+def clearEdgeCells(cell):
+    """
+    Checks if cells are on border by dilating them and then clearing the border. 
+    NOTE: This could be problematic since some cells are just close enough, but could be solved by stitching each image together, then checking the border.
+    """
+    mask = cell.mask
+    maskDilate = binary_dilation(mask)
+    maskFinal = clear_border(maskDilate)
+    if np.sum(maskFinal)==0:
+        return 0
+    else:
+        return 1
 
 def segmentGreen(RGB):
     """

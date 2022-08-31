@@ -16,15 +16,36 @@ from skimage.measure import label
 from skimage.color import label2rgb
 
 # %%
+def clearEdgeCells(cell):
+    mask = cell.mask
+    maskDilate = binary_dilation(mask)
+    maskFinal = clear_border(maskDilate)
+    if np.sum(maskFinal)==0:
+        return 0
+    else:
+        return 1
+# %%
 print('Loading cell data, hold on...')
 esamNeg = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E2.pickle',"rb"))
 esamPos = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"rb"))
+# Filter dates
+unFiltNum = len(esamNeg+esamPos)
 esamNeg = [cell for cell in esamNeg if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
 esamPos = [cell for cell in esamPos if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
-# %%
+diff = unFiltNum - len(esamNeg+esamPos)
+print(f'Filtered {diff} cells by date')
+# Filter color
+unFiltNum = len(esamNeg+esamPos)
 esamNeg = [cell for cell in esamNeg if cell.color=='red']
 esamPos = [cell for cell in esamPos if cell.color=='green']
-
+diff = unFiltNum - len(esamNeg+esamPos)
+print(f'Filtered {diff} cells by color')
+# Filter borders
+unFiltNum = len(esamNeg+esamPos)
+esamNeg = [cell for cell in esamNeg if clearEdgeCells(cell) == 1]
+esamPos = [cell for cell in esamPos if clearEdgeCells(cell) == 1]
+diff = unFiltNum - len(esamNeg+esamPos)
+print(f'Filtered {diff} cells from edges')
 cells = esamNeg+esamPos
 # %%
 imEsamNeg = [f'{cell.imageBase}_{cell.splitNum}' for cell in (esamNeg)]

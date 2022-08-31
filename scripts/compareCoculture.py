@@ -2,7 +2,9 @@
 import pickle
 import random
 import pandas as pd
-from cellMorphHelper import procrustes
+# from cellMorphHelper import procrustes
+import cellMorphHelper
+import cellMorph
 import numpy as np
 import datetime
 
@@ -21,6 +23,16 @@ coculture = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E7.pickle',
 esamNeg = [cell for cell in esamNeg if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
 esamPos = [cell for cell in esamPos if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
 coculture = [cell for cell in coculture if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
+# Filter color
+esamNeg = [cell for cell in esamNeg if cell.color=='red']
+esamPos = [cell for cell in esamPos if cell.color=='green']
+coculture = [cell for cell in coculture if cell.color in ['green', 'red']]
+
+# Filter borders
+esamNeg = [cell for cell in esamNeg if cellMorphHelper.clearEdgeCells(cell) == 1]
+esamPos = [cell for cell in esamPos if cellMorphHelper.clearEdgeCells(cell) == 1]
+coculture = [cell for cell in coculture if cellMorphHelper.clearEdgeCells(cell) == 1]
+
 # %%
 # Subset some cells
 random.seed(1234)
