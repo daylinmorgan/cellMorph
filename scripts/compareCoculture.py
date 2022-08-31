@@ -4,6 +4,7 @@ import random
 import pandas as pd
 from cellMorphHelper import procrustes
 import numpy as np
+import datetime
 
 import matplotlib.pyplot as plt
 import umap
@@ -12,10 +13,14 @@ from skimage.io import imread
 
 from sklearn.cluster import KMeans
 # %%
-esamNeg = pickle.load(open('../results/TJ2201Split16ESAMNeg.pickle',"rb"))
-esamPos = pickle.load(open('../results/TJ2201Split16ESAMPos.pickle',"rb"))
-coculture = pickle.load(open('../results/TJ2201Split16CellPerims.pickle',"rb"))
-
+esamNeg = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E2.pickle',"rb"))
+esamPos = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"rb"))
+coculture = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E7.pickle',"rb"))
+# %%
+# Constrain to low confluency
+esamNeg = [cell for cell in esamNeg if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
+esamPos = [cell for cell in esamPos if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
+coculture = [cell for cell in coculture if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
 # %%
 # Subset some cells
 random.seed(1234)
@@ -35,8 +40,18 @@ esamPosSub = esamPosSub[0:nDesired]
 origPerim = cocultureSub[0].perimAligned.copy()
 
 # %% Align perimeters to each other
-referencePerim = esamNegSub[0].perimAligned
+referencePerim = esamNegSub[0].perimInt
 c = 1
+
+
+for cell in esamNegSub:
+    currentPerim = cell.perimInt
+    
+    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
+
+    cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
+
+
 for cell in cocultureSub:
     currentPerim = cell.perimInt
     
@@ -82,10 +97,11 @@ ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
 for label in np.unique(labels):
-    labelIdx = np.where(np.array(labels)==label)
-    ux = u[labelIdx,0]
-    uy = u[labelIdx,1]
-    ax.scatter(ux, uy, s=5, c=label2Color[label], alpha=0.5, label=label)
+    if 'e' in label:
+        labelIdx = np.where(np.array(labels)==label)
+        ux = u[labelIdx,0]
+        uy = u[labelIdx,1]
+        ax.scatter(ux, uy, s=5, c=label2Color[label], alpha=0.5, label=label)
 
 ax.set_xlabel('UMAP 1')
 ax.set_ylabel('UMAP 2')
@@ -215,7 +231,7 @@ monoIdx = np.array(monoIdx) == 1
 XMono = X[monoIdx,:]
 yMono = np.array(labels)[monoIdx]
 
-df = pd.DataFrame(pcaxMono)
+df = pd.DataFrame(X)
 
 X_train, X_test, y_train, y_test = train_test_split(XMono, yMono, test_size=0.33, random_state=1234)
 clf = LogisticRegression(solver="liblinear", random_state=1234, C=1e-6,max_iter=1e7).fit(X_train, y_train)

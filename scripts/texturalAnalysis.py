@@ -14,21 +14,34 @@ from skimage.io import imread
 import cv2
 
 import pyfeats
-# %%
-experiment = 'TJ2201Split16'
-cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
+import umap
 
+# %%
+esamNeg = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E2.pickle',"rb"))
+esamPos = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"rb"))
+
+random.seed(1234)
+esamNegPerm = random.sample(range(len(esamNeg)), len(esamNeg))
+esamPosPerm = random.sample(range(len(esamPos)), len(esamPos))
+nDesired = 400
+
+esamNegSub = [esamNeg[x] for x in esamNegPerm if esamNeg[x].color=='red']
+esamPosSub = [esamPos[x] for x in esamPosPerm if esamPos[x].color=='green']
+
+esamNegSub = esamNegSub[0:nDesired]
+esamPosSub = esamPosSub[0:nDesired]
+
+cells = esamNegSub+esamPosSub
 # %% Pyfeatures test
 # Take subset of cells
-maxCells = 400
-cellSample = np.array(cells)[random.sample(range(len(cells)), 5000)]
-cellSample = [cell for cell in cellSample if cell.color != 'NaN']
+# cellSample = np.array(cells)[random.sample(range(len(cells)), 5000)]
+# cellSample = [cell for cell in cellSample if cell.color != 'NaN']
 allFeatures, allLabels = [], []
 y = []
 c = 1
 
 # Find textural features for each cell
-for cell in cellSample:
+for cell in cells:
     if cell.color == 'NaN':
         continue
     y.append(cell.color)
@@ -110,10 +123,24 @@ for cell in cellSample:
     allFeatures.append(features)
     allLabels.append(labels)
     c += 1
-    if c > maxCells:
-        break
 # %%
 X = pd.DataFrame(allFeatures)
-X['colors'] = y
-X.to_csv('../results/{}textureFeatures.csv'.format(experiment), index=0)
+X['label'] = y
+X = X.dropna()
+
+yNA = X['label']
+X = X.drop('label', axis=1)
+# %%
+fit = umap.UMAP()
+u = fit.fit_transform(X)
+# %%
+plt.scatter(u[:,0], u[:,1],c=yNA, s = 5, alpha = 0.25)
+# %%
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+
+X_train, X_test, y_train, y_test = train_test_split(X, yNA, test_size=0.33, random_state=1234)
+clf = LogisticRegression(solver="liblinear", random_state=1234, C=1e-6,max_iter=1e7).fit(X_train, y_train)
+roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
 # %%

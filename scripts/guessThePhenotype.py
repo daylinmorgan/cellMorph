@@ -9,6 +9,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import datetime
 
 from skimage.io import imread
 from skimage.measure import label
@@ -18,6 +19,8 @@ from skimage.color import label2rgb
 print('Loading cell data, hold on...')
 esamNeg = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E2.pickle',"rb"))
 esamPos = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"rb"))
+esamNeg = [cell for cell in esamNeg if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
+esamPos = [cell for cell in esamPos if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
 # %%
 esamNeg = [cell for cell in esamNeg if cell.color=='red']
 esamPos = [cell for cell in esamPos if cell.color=='green']
@@ -143,16 +146,23 @@ from IPython import display
 
 print(
 """
- / __| ___  __ _  _ __   ___  _ _ | |_  __ _ | |_ (_) ___  _ _  
- \__ \/ -_)/ _` || '  \ / -_)| ' \|  _|/ _` ||  _|| |/ _ \| ' \ 
- |___/\___|\__, ||_|_|_|\___||_||_|\__|\__,_| \__||_|\___/|_||_|
- __   __   |___/ _     _        _    _                          
- \ \ / /__ _ | |(_) __| | __ _ | |_ (_) ___  _ _                
-  \ V // _` || || |/ _` |/ _` ||  _|| |/ _ \| ' \               
-   \_/ \__,_||_||_|\__,_|\__,_| \__||_|\___/|_||_|              
-  / __| __ _  _ __   ___                                        
- | (_ |/ _` || '  \ / -_)                                       
-  \___|\__,_||_|_|_|\___|   
+ _____ _     _____ ____  ____                           
+/  __// \ /\/  __// ___\/ ___\                          
+| |  _| | |||  \  |    \|    \                          
+| |_//| \_/||  /_ \___ |\___ |                          
+\____\\____/\____\\____/\____/                          
+                                                        
+ _____  _     ____  _____                               
+/__ __\/ \ /|/  _ \/__ __\                              
+  / \  | |_||| / \|  / \                                
+  | |  | | ||| |-||  | |                                
+  \_/  \_/ \|\_/ \|  \_/                                
+                                                        
+ ____  _     _____ _      ____  _____ ___  _ ____  _____
+/  __\/ \ /|/  __// \  /|/  _ \/__ __\\  \///  __\/  __/
+|  \/|| |_|||  \  | |\ ||| / \|  / \   \  / |  \/||  \  
+|  __/| | |||  /_ | | \||| \_/|  | |   / /  |  __/|  /_ 
+\_/   \_/ \|\____\\_/  \|\____/  \_/  /_/   \_/   \____\  
 """
 )
 

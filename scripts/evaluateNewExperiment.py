@@ -25,4 +25,3 @@ for imNum in random.sample(range(len(ims)), 3):
     cellMorphHelper.viewPredictorResult(predictor, imPath)
 # %%
 cellMorphHelper.viewPredictorResult(predictor, '../data/TJ2201Split16/phaseContrast/phaseContrast_D2_1_2022y04m09d_04h00m_14.png')
-

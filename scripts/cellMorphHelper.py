@@ -544,6 +544,38 @@ def extractFeatures(f, mask, perim):
             allLabels += list(itertools.chain.from_iterable(featureLabel[nFeature:]))
     return allFeatures, allLabels
 
+def alignPerimeters(cells: list):
+    """
+    Aligns a list of cells of class cellPerims
+    Inputs:
+    cells: A list of instances of cellPerims
+    Ouputs:
+    List with the instance variable perimAligned as an interpolated perimeter aligned
+    to the first instance in list.
+    """
+    # Create reference perimeter from first 100 cells
+    referencePerimX = []
+    referencePerimY = []
+    for cell in cells[0:1]:
+        # Center perimeter
+        originPerim = cell.perimInt.copy() - np.mean(cell.perimInt.copy(), axis=0)
+        referencePerimX.append(originPerim[:,0])
+        referencePerimY.append(originPerim[:,1])
+    # Average perimeters
+    referencePerim = np.array([ np.mean(np.array(referencePerimX), axis=0), \
+                                np.mean(np.array(referencePerimY), axis=0)]).T
+
+    # Align all cells to the reference perimeter
+    c = 1
+    for cell in cells:
+        currentPerim = cell.perimInt
+        
+        # Perform procrustes to align orientation (not scaled by size)
+        refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
+
+        # Put cell centered at origin
+        cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
+    return cells
 # Testing
 def validateExperimentData(experiment, splitNum=16):
     """
@@ -587,7 +619,7 @@ def viewPredictorResult(predictor, imPath: str):
     """
     im = imread(imPath)
     imBase = getImageBase(imPath.split('/')[-1])
-    outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+    outputs = predictor(im)  # format is docume nted at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
     v = Visualizer(im[:, :, ::-1],
                 #    metadata=cell_metadata, 
                    scale=1, 
