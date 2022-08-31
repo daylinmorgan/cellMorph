@@ -589,6 +589,18 @@ def alignPerimeters(cells: list):
         # Put cell centered at origin
         cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
     return cells
+
+def filterCells(cells, confluencyDate=False, edge=False, color=False):
+    nCells = len(cells)
+    if confluencyDate  != False:
+        cells = [cell for cell in cells if cell.date < confluencyDate]
+    if edge != False:
+        cells = [cell for cell in cells if clearEdgeCells(cell) == 1]
+    if color != False:
+        cells = [cell for cell in cells if cell.color.lower() == color.lower()]
+    nCellsNew = len(cells)
+    print(f'Filtered out {nCells-nCellsNew} cells')
+    return cells
 # Testing
 def validateExperimentData(experiment, splitNum=16):
     """
