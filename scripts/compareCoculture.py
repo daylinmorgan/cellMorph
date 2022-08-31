@@ -59,7 +59,7 @@ c = 1
 for cell in esamNegSub:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
@@ -67,14 +67,14 @@ for cell in esamNegSub:
 for cell in cocultureSub:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
 for cell in esamPosSub:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
    

@@ -29,6 +29,7 @@ from skimage import img_as_float
 from skimage.color import rgb2hsv
 from skimage.io import imread
 from skimage.morphology import binary_dilation
+from skimage.segmentation import clear_border
 import pyfeats
 
 # import some common detectron2 utilities
