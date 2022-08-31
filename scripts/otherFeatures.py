@@ -25,7 +25,6 @@ import cv2
 
 import pyfeats
 # %%
-experiment = 'TJ2201Split16'
 cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
 
 # %% Pyfeatures test
