@@ -13,10 +13,14 @@ import matplotlib.pyplot as plt
 import pickle
 import random
 import numpy as np
-import itertools
+import datetime
+import pickle
 
 from cellMorph import cellPerims
-from cellMorphHelper import extractFeatures
+# from cellMorphHelper import extractFeatures
+import sys, importlib
+# importlib.reload(sys.modules['cellMorphHelper'])
+import cellMorphHelper
 
 from skimage.color import rgb2gray
 from skimage.measure import find_contours
@@ -25,8 +29,8 @@ import cv2
 
 import pyfeats
 # %%
-cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
-
+cells = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"rb"))
+cells = cellMorphHelper.filterCells(cells, confluencyDate=datetime.datetime(2022, 4, 8, 16, 0), color='green', edge=True)
 # %% Pyfeatures test
 # Take subset of cells
 maxCells = 400
@@ -43,12 +47,11 @@ allFeatures, allLabels = [], []
 
 cellNum = 1
 for cell in cellSample:
-    print('{}/{}'.format(cellNum, len(cellSample)))
     f = rgb2gray(imread(cell.phaseContrast))
     mask = cell.mask
     a = np.where(mask==True)
     bbox = np.min(a[0]), np.max(a[0]), np.min(a[1]), np.max(a[1])
-
+    print(f'{cellNum}/{len(cellSample)}')
     f = f[bbox[0]:bbox[1], bbox[2]:bbox[3]]
     # Stretches values to be in between 0 and 255
     # NOTE: Image must initial be bound between 0 and 1
@@ -57,13 +60,18 @@ for cell in cellSample:
     # Take only mask
     image = np.multiply(f, mask)
     perimeter = cell.perimeter
-
-    extractedFeatures, extractedLabels = extractFeatures(f, mask, perimeter)
+    extractedFeatures, extractedLabels = cellMorphHelper.extractFeatures(image, mask, perimeter)
 
     allFeatures.append(extractedFeatures)
     allLabels.append(extractedLabels)
+    # try :
+    #     extractedFeatures, extractedLabels = extractFeatures(image, mask, perimeter)
 
+    #     allFeatures.append(extractedFeatures)
+    #     allLabels.append(extractedLabels)
+    # except:
+    #     print('Couldn\'t get features for cell')
+    if cellNum%100 == 0:
+        print('Saving features')
+        pickle.dump([allFeatures, allLabels], open('../results/allFeaturesTJ2201.pickle', "wb"))
     cellNum += 1
-# %%
-
-

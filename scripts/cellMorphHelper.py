@@ -19,6 +19,7 @@ import torch
 import detectron2
 import datetime
 import random
+import itertools
 
 from scipy.interpolate import interp1d
 from scipy.spatial import ConvexHull
@@ -494,7 +495,7 @@ def procrustes(X, Y, scaling=False, reflection='best'):
 
     return d, Z, tform
 
-def extractFeatures(f, mask, perim):
+def extractFeatures(image, mask, perim):
     """
     A wrapper function for pyfeats (https://github.com/giakou4/pyfeats) to extract parameters
     Inputs:
@@ -517,7 +518,7 @@ def extractFeatures(f, mask, perim):
     features['A_FDTA']      = pyfeats.fdta(image, mask, s=3)
     features['A_GLRLM']     = pyfeats.glrlm_features(image, mask, Ng=256)
     features['A_FPS']       = pyfeats.fps(image, mask)
-    features['A_Shape_par'] = pyfeats.shape_parameters(image, mask, perimeter, pixels_per_mm2=1)
+    features['A_Shape_par'] = pyfeats.shape_parameters(image, mask, perim, pixels_per_mm2=1)
     features['A_HOS']       = pyfeats.hos_features(image, th=[135,140])
     features['A_LBP']       = pyfeats.lbp_features(image, image, P=[8,16,24], R=[1,2,3])
     features['A_GLSZM']     = pyfeats.glszm_features(image, mask)
