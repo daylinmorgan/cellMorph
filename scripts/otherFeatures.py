@@ -60,17 +60,18 @@ for cell in cellSample:
     # Take only mask
     image = np.multiply(f, mask)
     perimeter = cell.perimeter
-    extractedFeatures, extractedLabels = cellMorphHelper.extractFeatures(image, mask, perimeter)
+    # extractedFeatures, extractedLabels = cellMorphHelper.extractFeatures(image, mask, perimeter)
 
-    allFeatures.append(extractedFeatures)
-    allLabels.append(extractedLabels)
-    # try :
-    #     extractedFeatures, extractedLabels = extractFeatures(image, mask, perimeter)
+    # allFeatures.append(extractedFeatures)
+    # allLabels.append(extractedLabels)
+    try :
+        extractedFeatures, extractedLabels = cellMorphHelper.extractFeatures(image, mask, perimeter)
 
-    #     allFeatures.append(extractedFeatures)
-    #     allLabels.append(extractedLabels)
-    # except:
-    #     print('Couldn\'t get features for cell')
+        allFeatures.append(extractedFeatures)
+        allLabels.append(extractedLabels)
+        colors.append(cell.color)
+    except:
+        print('Couldn\'t get features for cell')
     if cellNum%100 == 0:
         print('Saving features')
         pickle.dump([allFeatures, allLabels], open('../results/allFeaturesTJ2201.pickle', "wb"))
