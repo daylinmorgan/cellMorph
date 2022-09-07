@@ -534,12 +534,12 @@ def extractFeatures(image, mask, perim):
     #% D. Multi-Scale features
     features['D_DWT'] =     pyfeats.dwt_features(image, mask, wavelet='bior3.3', levels=3)
     features['D_SWT'] =     pyfeats.swt_features(image, mask, wavelet='bior3.3', levels=3)
-    features['D_WP'] =      pyfeats.wp_features(image, mask, wavelet='coif1', maxlevel=3)
+    # features['D_WP'] =      pyfeats.wp_features(image, mask, wavelet='coif1', maxlevel=3)
     features['D_GT'] =      pyfeats.gt_features(image, mask)
     features['D_AMFM'] =    pyfeats.amfm_features(image)
 
     #% E. Other
-    features['E_HOG'] =             pyfeats.hog_features(image, ppc=8, cpb=3)
+    # features['E_HOG'] =             pyfeats.hog_features(image, ppc=8, cpb=3)
     features['E_HuMoments'] =       pyfeats.hu_moments(image)
     # features['E_TAS'] =             pyfeats.tas_features(image)
     features['E_ZernikesMoments'] = pyfeats.zernikes_moments(image, radius=9)

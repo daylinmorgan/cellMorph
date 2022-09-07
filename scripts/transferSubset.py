@@ -14,7 +14,8 @@ imsTransfer = []
 for im in ims:
     date = '_'.join(im.split('.')[0].split('_')[3:])
     date = cellMorphHelper.convertDate(date)
-    if date < datetime.datetime(2022, 4, 8, 16, 0):
+    well = im.split('_')[1]
+    if date < datetime.datetime(2022, 4, 8, 16, 0) and well == 'E2':
         src = os.path.join('../data/TJ2201/composite', im)
         dest = os.path.join('/stor/scratch/Brock/Tyler/download', im)
         shutil.copy(src, dest)
