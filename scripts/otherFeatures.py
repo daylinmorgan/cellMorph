@@ -165,7 +165,7 @@ for cell in cellSample[0:20]:
     features['D_SWT'] =     pyfeats.swt_features(image, mask, wavelet='bior3.3', levels=3)
     lens.append(len(features['D_SWT'][0]))
     # features['D_WP'] =      pyfeats.wp_features(image, mask, wavelet='coif1', maxlevel=3)
-    lens.append(len(features['D_WP'][0]))
+    # lens.append(len(features['D_WP'][0]))
     features['D_GT'] =      pyfeats.gt_features(image, mask)
     lens.append(len(features['D_GT'][0]))
     features['D_AMFM'] =    pyfeats.amfm_features(image)
@@ -173,7 +173,7 @@ for cell in cellSample[0:20]:
     #% E. Other
     
     # features['E_HOG'] =             pyfeats.hog_features(image, ppc=8, cpb=3)
-    lens.append(len(features['E_HOG'][0]))
+    # lens.append(len(features['E_HOG'][0]))
     features['E_HuMoments'] =       pyfeats.hu_moments(image)
     lens.append(len(features['E_HuMoments'][0]))
     features['E_ZernikesMoments'] = pyfeats.zernikes_moments(image, radius=9)
