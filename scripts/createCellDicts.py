@@ -131,6 +131,8 @@ for img in imgs:
         objs.append(obj)
     record["annotations"] = objs
     datasetDicts.append(record)
+    if idx % 100 == 0:
+        pickle.dump(datasetDicts, open(f'{expDir}_datasetDict.pickle', "wb"))
     objs = []
     idx+=1
 
