@@ -133,3 +133,5 @@ for img in imgs:
     datasetDicts.append(record)
     objs = []
     idx+=1
+
+pickle.dump(datasetDicts, open(f'{expDir}_datasetDict.pickle', "wb"))
