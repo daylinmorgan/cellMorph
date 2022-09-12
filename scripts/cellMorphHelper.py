@@ -620,6 +620,11 @@ def validateExperimentData(experiment, splitNum=16):
     # Check that files are of correct extension
     phaseContrastFiles = os.listdir(os.path.join('../data', experiment, 'phaseContrast'))
     compositeFiles =     os.listdir(os.path.join('../data', experiment, 'composite'))
+    maskDir = os.path.join('../data', experiment, 'mask')
+    if os.path.isdir(maskDir):
+        maskFiles =          os.listdir(maskDir)
+    else:
+        maskFiles = []
 
     phaseImageBases = []
     for phaseContrastFile in phaseContrastFiles:
@@ -631,6 +636,11 @@ def validateExperimentData(experiment, splitNum=16):
         assert compositeFile.split('.')[-1] == 'png', f'Non .png file found:\n {compositeFile}'
         assert imageBase in phaseImageBases, f'Composite file not in phase contrast files {compositeFile}'
 
+    if len(maskFiles)>0:
+        for maskFile in maskFiles:
+            imageBase = getImageBase(maskFile)
+            assert imageBase in phaseImageBases, f'Mask file nßot in phase contrast files {compositeFile}'
+        
     print('Experimental data is in proper format!')
 # Detectron2 Processes
 

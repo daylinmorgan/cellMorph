@@ -21,3 +21,4 @@ for maskFile in maskFiles:
     imNum += 1
 # %%
 # dict_keys(['img', 'outlines', 'masks', 'chan_choose', 'ismanual', 'filename', 'flows', 'est_diam'])
+# %% Split mask directory
