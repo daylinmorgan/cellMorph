@@ -364,6 +364,7 @@ def findFluorescenceColor(RGBLocation, mask):
     Output: Color
     """
     RGB = imread(RGBLocation)
+    mask = mask.asypte('bool')
     RGB[~np.dstack((mask,mask,mask))] = 0
     nGreen, BW = segmentGreen(RGB)
     nRed, BW = segmentRed(RGB)
@@ -655,7 +656,7 @@ def viewPredictorResult(predictor, imPath: str):
     """
     im = imread(imPath)
     imBase = getImageBase(imPath.split('/')[-1])
-    outputs = predictor(im)  # format is docume nted at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+    outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
     v = Visualizer(im[:, :, ::-1],
                 #    metadata=cell_metadata, 
                    scale=1, 

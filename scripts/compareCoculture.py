@@ -52,6 +52,7 @@ esamPosSub = esamPosSub[0:nDesired]
 origPerim = cocultureSub[0].perimAligned.copy()
 
 # %% Align perimeters to each other
+scalingBool = 0
 referencePerim = esamNegSub[0].perimInt
 c = 1
 
@@ -59,7 +60,7 @@ c = 1
 for cell in esamNegSub:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=scalingBool)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
@@ -67,14 +68,14 @@ for cell in esamNegSub:
 for cell in cocultureSub:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=scalingBool)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
 
 for cell in esamPosSub:
     currentPerim = cell.perimInt
     
-    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
+    refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=scalingBool)
 
     cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
    

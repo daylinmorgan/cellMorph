@@ -18,8 +18,9 @@ setup_logger()
 # import some common libraries
 import numpy as np
 import pandas as pd
-import os, json, cv2, random
+import os, json, cv2, random, pickle
 import matplotlib.pyplot as plt
+import datetime
 
 # Import image processing
 from skimage import measure
@@ -35,37 +36,29 @@ from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
-# %% Functions
-def clearEdgeCells(mask):
-    """
-    Checks if cells are on border by dilating them and then clearing the border. 
-    NOTE: This could be problematic since some cells are just close enough, but could be solved by stitching each image together, then checking the border.
-    
-    Returns 0 if mask is on edge, else returns 1
-    """
-    maskDilate = binary_dilation(mask)
-    maskFinal = clear_border(maskDilate)
-    if np.sum(maskFinal)==0:
-        return 0
-    else:
+# %%
+def dateCorrect(file_name):
+    str_date = '_'.join(file_name.split('_')[3:5])
+    datetimeDate = cellMorphHelper.convertDate(str_date)
+    if datetimeDate<datetime.datetime(2022, 4, 8, 16, 0):
         return 1
-
-def findFluorescenceColor(RGB, mask):
-    """
-    Finds the fluorescence of a cell
-    Input: RGB image location
-    Output: Color
-    """
-    RGB[~np.dstack((mask,mask,mask))] = 0
-    nGreen, BW = cellMorphHelper.segmentGreen(RGB)
-    nRed, BW = cellMorphHelper.segmentRed(RGB)
-    if nGreen>=(nRed+100):
-        return "green"
-    elif nRed>=(nGreen+100):
-        return "red"
     else:
-        return "NaN"
+        return 0
+c = 0
+for file in files:
+    if not dateCorrect(file):
+        c+=1
+# %% 
+datasetDicts = pickle.load(open('../output/TJ2201Split16_datasetDict.pickle',"rb"))
 
+# %%
+print(len(datasetDicts))
+datasetDicts = [img for img in datasetDicts if dateCorrect(img)]
+print(len(datasetDicts))
+# %%
+DatasetCatalog.register("cellMorph_" + "train", lambda x: datasetDicts)
+MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
+cell_metadata = MetadataCatalog.get("cellMorph_train")
 # %% Visualization of data loader
 # datasetDicts = getCellDicts(inputs[0], inputs[1])
 for d in random.sample(datasetDicts, 1):
