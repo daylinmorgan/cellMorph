@@ -1,7 +1,7 @@
 # %% [markdown]
 """
 # Cell Segmentation With Mask-RCNN
-This is to be run using all the images in the masks folder (as opposed to using all validated masks)
+This is to be run using fully-validated masks from cellpose
 """
 # %%
 import cellMorphHelper
@@ -21,6 +21,7 @@ import pandas as pd
 import os, json, cv2, random, pickle
 import matplotlib.pyplot as plt
 import datetime
+from tqdm import tqdm
 
 # Import image processing
 from skimage import measure
@@ -36,18 +37,75 @@ from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
-# %%
-def dateCorrect(file_name):
-    str_date = '_'.join(file_name.split('_')[3:5])
-    datetimeDate = cellMorphHelper.convertDate(str_date)
-    if datetimeDate<datetime.datetime(2022, 4, 8, 16, 0):
-        return 1
-    else:
-        return 0
-c = 0
-for file in files:
-    if not dateCorrect(file):
-        c+=1
+# %% Getting/reading *.npy
+experiment = 'TJ2201'
+imgType = 'phaseContrast'
+
+segDir = os.path.join('../data',experiment,'cellPoseOutput')
+segFiles = os.listdir(segDir)
+idx = 0
+
+datasetDicts = []
+for segFile in tqdm(segFiles[0:10]):
+    # Load in cellpose output
+    segFull = os.path.join(segDir, segFile)
+    seg = np.load(segFull, allow_pickle=True)
+    seg = seg.item()
+
+    # Find information for each image
+    imgBase = cellMorphHelper.getImageBase(seg['filename'].split('/')[-1])
+    imgFile = f'{imgType}_{imgBase}.png'
+    imgPath = os.path.join('../data', experiment, imgType, imgFile)
+    assert os.path.isfile(imgPath)
+    record = {}
+    record['file_name'] = imgPath
+    record['image_id'] = idx
+    record['height'] = seg['img'].shape[0]
+    record['width'] = seg['img'].shape[1]
+
+    outlines = seg['outlines']
+    cellNums = range(1, np.max(outlines))
+
+    # Find information for each cell
+    cells = []
+    for cellNum in cellNums:
+        outline = np.where(outlines==cellNum)
+        px = outline[1]
+        py = outline[0]
+        poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
+        poly = [p for x in poly for p in x]
+
+        cell = {
+            "bbox": [np.min(px), np.min(py), np.max(px), np.max(py)],
+            "bbox_mode": BoxMode.XYXY_ABS,
+            "segmentation": [poly],
+            "category_id": 0,
+        }
+        cells.append(cell)
+    record["annotations"] = cells
+datasetDicts.append(record)
+idx+=1
+# %% Working with split images
+experiment = 'TJ2201'
+
+segDir = os.path.join('../data',experiment,'cellPoseOutput')
+segFiles = os.listdir(segDir)
+idx = 0
+
+datasetDicts = []
+for segFile in tqdm(segFiles[0:1]):
+
+    # Load in cellpose output
+    segFull = os.path.join(segDir, segFile)
+    seg = np.load(segFull, allow_pickle=True)
+    seg = seg.item()
+
+    splitOutlines = cellMorphHelper.imSplit(seg['outlines'])
+    nSplits = len(splitOutlines)
+
+    splitDir = f'{experiment}Split{nSplits}'
+
+    for splitIm in range(1, len(splitOutlines)):
 # %% 
 datasetDicts = pickle.load(open('../output/TJ2201Split16_datasetDict.pickle',"rb"))
 

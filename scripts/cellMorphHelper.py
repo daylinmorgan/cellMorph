@@ -586,7 +586,7 @@ def alignPerimeters(cells: list):
         currentPerim = cell.perimInt
         
         # Perform procrustes to align orientation (not scaled by size)
-        refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
+        refPerim2, currentPerim2, disparity = procrustes(referencePerim, currentPerim, scaling=False)
 
         # Put cell centered at origin
         cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
