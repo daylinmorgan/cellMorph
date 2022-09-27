@@ -66,33 +66,36 @@ def getCells(experiment, imgType, stage=None):
         seg = np.load(segFull, allow_pickle=True)
         seg = seg.item()
 
-        splitOutlines = cellMorphHelper.imSplit(seg['outlines'])
-        nSplits = len(splitOutlines)
+        splitMasks = cellMorphHelper.imSplit(seg['masks'])
+        nSplits = len(splitMasks)
 
         splitDir = f'{experiment}Split{nSplits}'
         imgBase = cellMorphHelper.getImageBase(seg['filename'].split('/')[-1])    
-        for splitNum in range(1, len(splitOutlines)+1):
+        for splitNum in range(1, len(splitMasks)+1):
             imgFile = f'{imgType}_{imgBase}_{splitNum}.png'
             imgPath = os.path.join('../data', splitDir, imgType, imgFile)
             assert os.path.isfile(imgPath)
             record = {}
             record['file_name'] = imgPath
             record['image_id'] = idx
-            record['height'] = splitOutlines[splitNum-1].shape[0]
-            record['width'] = splitOutlines[splitNum-1].shape[1]
+            record['height'] = splitMasks[splitNum-1].shape[0]
+            record['width'] = splitMasks[splitNum-1].shape[1]
 
-            outlines = splitOutlines[splitNum-1]
-            cellNums = np.unique(outlines)
+            mask = splitMasks[splitNum-1]
+            cellNums = np.unique(mask)
             cellNums = cellNums[cellNums != 0]
 
             cells = []
             for cellNum in cellNums:
-                outline = np.where(outlines==cellNum)
-                px = outline[1]
-                py = outline[0]
+                contours = measure.find_contours(img_as_float(mask==cellNum), .5)
+                fullContour = np.vstack(contours)
+
+                px = fullContour[:,1]
+                py = fullContour[:,0]
                 poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
                 poly = [p for x in poly for p in x]
-
+                if len(poly) < 4:
+                    return
                 cell = {
                     "bbox": [np.min(px), np.min(py), np.max(px), np.max(py)],
                     "bbox_mode": BoxMode.XYXY_ABS,
