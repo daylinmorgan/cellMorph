@@ -5,7 +5,7 @@ This is a repository to archive code to classify cells using their morphology. T
 2. Predict cell identity (transcriptomic state, lineage, etc.) from information. 
 
 This is meant to be a comprehensive set of scripts and functions which can train on an increasing complexity of features:
-- [ ] Morphology
+- [x] Morphology
 - [x] Textural Information
 - [x] Perimeter shapes
 - [ ] Convolutional Neural Networks
