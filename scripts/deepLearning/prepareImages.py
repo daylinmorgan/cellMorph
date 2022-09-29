@@ -6,6 +6,8 @@ import random
 import shutil
 
 from skimage.io import imread
+import matplotlib.pyplot as plt
+# %matplotlib inline
 from tqdm import tqdm
 # %% Make test data
 # dataDir = '../../data/esamMonoSegmented/'
@@ -38,6 +40,9 @@ class esamMono():
             for f in tqdm(os.listdir(label)):
                 path = os.path.join(label, f)
                 img = imread(path)
+                print(path)
+                plt.imshow(img)
+                return
                 self.training_data.append([np.array(img), np.eye(2)[self.labels[label]]])
         np.random.shuffle(self.training_data)
         np.save('../../data/esamMonoSegmented/training_data.npy', self.training_data)
@@ -45,3 +50,7 @@ class esamMono():
 if rebuild_data == True:
     esamMonoDat = esamMono()
     esamMonoDat.make_training_data()
+
+# %%
+x = imread('../../data/esamMonoSegmented/esamNegative/E2_9_2022y04m06d_12h00m_3-17433.png')
+plt.imshow(x)
