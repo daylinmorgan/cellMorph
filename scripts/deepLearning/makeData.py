@@ -115,14 +115,16 @@ for imgBase in tqdm(imgBases):
         diffCols = int((maxCols - pcCrop.shape[1])/2)
         pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
         # Resize in case the difference was not actually an integer
-        pcCrop = resize(pcCrop, (maxRows, maxCols))
+        pcCrop = resize(pcCrop, (maxRows, maxCols)).astype('uint8')
 
         if well == 'E2' and color == 'red':
             saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
             imsave(saveFile, pcCrop)
+            idx += 1
         elif well == 'D2' and color == 'green':
             saveFile = os.path.join(savePath, 'esamPositive', f'{imgBase}-{idx}.png')
             imsave(saveFile, pcCrop)
+            idx += 1
 # %%
 # bb = list(outputs.pred_boxes[4])[0].numpy()
 # bb = [int(corner) for corner in bb]

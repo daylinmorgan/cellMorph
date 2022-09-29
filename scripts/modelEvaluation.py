@@ -119,7 +119,6 @@ MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
 DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], 'test'))
 MetadataCatalog.get("cellMorph_" + "test").set(thing_classes=["cell"])
 
-
 cell_metadata = MetadataCatalog.get("cellMorph_train")
 # %%
 cfg = get_cfg()

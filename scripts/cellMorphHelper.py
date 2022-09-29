@@ -364,7 +364,7 @@ def findFluorescenceColor(RGBLocation, mask):
     Output: Color
     """
     RGB = imread(RGBLocation)
-    mask = mask.asypte('bool')
+    mask = mask.astype('bool')
     RGB[~np.dstack((mask,mask,mask))] = 0
     nGreen, BW = segmentGreen(RGB)
     nRed, BW = segmentRed(RGB)
@@ -640,7 +640,7 @@ def validateExperimentData(experiment, splitNum=16):
     if len(maskFiles)>0:
         for maskFile in maskFiles:
             imageBase = getImageBase(maskFile)
-            assert imageBase in phaseImageBases, f'Mask file nßot in phase contrast files {compositeFile}'
+            assert imageBase in phaseImageBases, f'Mask file not in phase contrast files {compositeFile}'
         
     print('Experimental data is in proper format!')
 # Detectron2 Processes
