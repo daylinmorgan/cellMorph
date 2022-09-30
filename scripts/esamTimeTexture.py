@@ -57,7 +57,7 @@ for label in ['Monoculture ESAM +', 'Monoculture ESAM -']:
         cmap = 'Greens'
     elif '-' in label:
         cmap = 'Reds'
-    ax.scatter(ux, uy, s=5, c=labelDates, alpha=0.5, label=label)
+    ax.scatter(ux, uy, s=5, c=labelDates, alpha=0.5, label=label, cmap=cmap)
 ax.set_xlabel('UMAP 1')
 ax.set_ylabel('UMAP 2')
 ax.set_title('ESAM Texture/Morphology')
@@ -69,5 +69,9 @@ ax.yaxis.label.set_size(fontSize)
 ax.legend(markerscale=4)
 ax.set_yticks([])
 ax.set_xticks([])
-fig.colorbar()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+fig.savefig('../results/figs/esamTextureTime.png', dpi=600)
+# fig.colorbar()
 # %%

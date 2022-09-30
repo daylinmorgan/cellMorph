@@ -87,6 +87,8 @@ fit = umap.UMAP()
 u = fit.fit_transform(X)
 # %%
 import matplotlib.dates as mdates
+from matplotlib.lines import Line2D
+
 matplotDates = mdates.date2num(dates)
 fontSize = 20
 fig, ax = plt.subplots()
@@ -96,8 +98,8 @@ fig.set_size_inches(6, 6)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
-ax.scatter(u[0:5000,0], u[0:5000,1], s=5, c=matplotDates[0:5000], alpha=0.5, cmap='Greens')
-ax.scatter(u[5000:,0], u[5000:,1], s=5, c=matplotDates[5000:], alpha=0.5, cmap='Reds')
+ax.scatter(u[0:5000,0], u[0:5000,1], s=5, c=matplotDates[0:5000], alpha=0.5, cmap='Greens', label='ESAM +')
+ax.scatter(u[5000:,0],  u[5000:,1],  s=5, c=matplotDates[5000:len(matplotDates)], alpha=0.5,  cmap='Reds',   label='ESAM -')
 
 ax.set_xlabel('UMAP 1')
 ax.set_ylabel('UMAP 2')
@@ -107,9 +109,16 @@ ax.yaxis.set_ticklabels([])
 ax.title.set_size(      fontSize)
 ax.xaxis.label.set_size(fontSize)
 ax.yaxis.label.set_size(fontSize)
-ax.legend(markerscale=4)
 ax.set_yticks([])
 ax.set_xticks([])
+
+legend_elements = [Line2D([0], [0], marker='o', color='w', label='Monoculture ESAM +',
+                          markerfacecolor='g', markersize=3),
+                    Line2D([0], [0], marker='o', color='w', label='Monoculture ESAM -',
+                    markerfacecolor='r', markersize=3)]
+
+ax.legend(handles=legend_elements, markerscale=4)
+fig.savefig('../results/figs/esamMonoTimeUMAP.png', dpi=600)
 
 # %%
 smap = ax.scatter(df['v'],df['u'],s=500,c=df.index,

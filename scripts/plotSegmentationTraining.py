@@ -55,4 +55,5 @@ for metric in metrics:
     plt.xlabel('Iteration')
     plt.ylabel(metric)
     c+=1
-plt.show()
+plt.savefig('../results/figs/maskRCNNSegMetrics.png', dpi=600)
+# %%
