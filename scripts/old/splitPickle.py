@@ -1,27 +1,29 @@
 # %%
-import cellMorph
-import cellMorphHelper
-
-import pickle
 import os
+import pickle
+
+import cellMorphHelper
 import numpy as np
+
+import cellMorph
+
 # %%
-AG2217=pickle.load(open('../results/AG2217-ESAM-TGFB/AG2217-ESAM-TGFB.pickle',"rb"))
+AG2217 = pickle.load(open("../results/AG2217-ESAM-TGFB/AG2217-ESAM-TGFB.pickle", "rb"))
 # %%
 wells = []
 for cell in AG2217:
-    well = cell.imageBase.split('_')[0]
+    well = cell.imageBase.split("_")[0]
     wells.append(well)
 # %%
 wellDict = {well: [] for well in np.unique(wells)}
 
 for cell in AG2217:
-    well = cell.imageBase.split('_')[0]
+    well = cell.imageBase.split("_")[0]
     wellDict[well].append(cell)
 # %%
-saveDir = '../results/AG2217-ESAM-TGFB'
+saveDir = "../results/AG2217-ESAM-TGFB"
 for well in wellDict.keys():
-    saveFile = f'{saveDir}-{well}.pickle'
+    saveFile = f"{saveDir}-{well}.pickle"
     print(saveFile)
     pickle.dump(wellDict[well], open(saveFile, "wb"))
 

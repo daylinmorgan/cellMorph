@@ -1,14 +1,16 @@
 # %%
 import os
-import numpy as np
-import torch
 import random
 import shutil
 
-from skimage.io import imread
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from skimage.io import imread
+
 # %matplotlib inline
 from tqdm import tqdm
+
 # %% Make test data
 # dataDir = '../../data/esamMonoSegmented/'
 # testingDir = os.path.join(dataDir, 'testing')
@@ -27,9 +29,10 @@ from tqdm import tqdm
 # %%
 rebuild_data = True
 
-class esamMono():
-    esamNegative = '../../data/esamMonoSegmented/esamNegative'
-    esamPositive = '../../data/esamMonoSegmented/esamPositive'
+
+class esamMono:
+    esamNegative = "../../data/esamMonoSegmented/esamNegative"
+    esamPositive = "../../data/esamMonoSegmented/esamPositive"
 
     labels = {esamNegative: 0, esamPositive: 1}
     training_data = []
@@ -40,14 +43,19 @@ class esamMono():
             for f in tqdm(os.listdir(label)):
                 path = os.path.join(label, f)
                 img = imread(path)
-                self.training_data.append([np.array(img), np.eye(2)[self.labels[label]]])
+                self.training_data.append(
+                    [np.array(img), np.eye(2)[self.labels[label]]]
+                )
         np.random.shuffle(self.training_data)
-        np.save('../../data/esamMonoSegmented/training_data.npy', self.training_data)
+        np.save("../../data/esamMonoSegmented/training_data.npy", self.training_data)
+
 
 if rebuild_data == True:
     esamMonoDat = esamMono()
     esamMonoDat.make_training_data()
 
 # %%
-x = imread('../../data/esamMonoSegmented/esamNegative/E2_9_2022y04m06d_12h00m_3-17433.png')
+x = imread(
+    "../../data/esamMonoSegmented/esamNegative/E2_9_2022y04m06d_12h00m_3-17433.png"
+)
 plt.imshow(x)

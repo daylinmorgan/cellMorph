@@ -1,22 +1,23 @@
 #!/usr/bin/python3
 # %%
-import sys, importlib
+import importlib
+import os
+
 # importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
-import os
-import cv2
-import numpy as np
-from skimage.io import imread
+import sys
 
-import matplotlib.pyplot as plt
-from cellMorph import cellPerims
 import cellMorphHelper
-
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+from detectron2.utils.visualizer import ColorMode, Visualizer
 from skimage import data, measure
+from skimage.io import imread
 from skimage.segmentation import clear_border
 
-from detectron2.utils.visualizer import Visualizer
-from detectron2.utils.visualizer import ColorMode
+from cellMorph import cellPerims
+
 
 # %% Functions
 def alignPerimeters(cells: list):
@@ -34,57 +35,65 @@ def alignPerimeters(cells: list):
     for cell in cells[0:1]:
         # Center perimeter
         originPerim = cell.perimInt.copy() - np.mean(cell.perimInt.copy(), axis=0)
-        referencePerimX.append(originPerim[:,0])
-        referencePerimY.append(originPerim[:,1])
+        referencePerimX.append(originPerim[:, 0])
+        referencePerimY.append(originPerim[:, 1])
     # Average perimeters
-    referencePerim = np.array([ np.mean(np.array(referencePerimX), axis=0), \
-                                np.mean(np.array(referencePerimY), axis=0)]).T
+    referencePerim = np.array(
+        [
+            np.mean(np.array(referencePerimX), axis=0),
+            np.mean(np.array(referencePerimY), axis=0),
+        ]
+    ).T
 
     # Align all cells to the reference perimeter
     c = 1
     for cell in cells:
         currentPerim = cell.perimInt
-        
+
         # Perform procrustes to align orientation (not scaled by size)
-        refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(referencePerim, currentPerim, scaling=False)
+        refPerim2, currentPerim2, disparity = cellMorphHelper.procrustes(
+            referencePerim, currentPerim, scaling=False
+        )
 
         # Put cell centered at origin
         cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
     return cells
+
+
 # %%
-predictor = cellMorphHelper.getSegmentModel('../output/TJ2201Split16')
+predictor = cellMorphHelper.getSegmentModel("../output/TJ2201Split16")
 # %% Find masks for experiment
 experiment = sys.argv[1]
 
 # Check if split images exist
-if not os.path.isdir(os.path.join('../data', experiment+'Split16')):
-    print('Experiment is unsplit, splitting...')
+if not os.path.isdir(os.path.join("../data", experiment + "Split16")):
+    print("Experiment is unsplit, splitting...")
     cellMorphHelper.splitExpIms(experiment)
 else:
-    print('Experiment has been split')
+    print("Experiment has been split")
 
 # Validate experiment
 cellMorphHelper.validateExperimentData(experiment)
-experiment = experiment+'Split16'
+experiment = experiment + "Split16"
 
 # Make a results directory
-resDir = f'../results/{experiment}'
+resDir = f"../results/{experiment}"
 os.makedirs(resDir, exist_ok=True)
 # %%
-print('Starting Experiment: {}'.format(experiment))
-ims = os.listdir(os.path.join('../data',experiment, 'phaseContrast'))
-imbases = ['_'.join(im.split('.')[0].split('_')[1:-1]) for im in ims]
-splitNums = [int(im.split('.')[0].split('_')[-1]) for im in ims]
+print("Starting Experiment: {}".format(experiment))
+ims = os.listdir(os.path.join("../data", experiment, "phaseContrast"))
+imbases = ["_".join(im.split(".")[0].split("_")[1:-1]) for im in ims]
+splitNums = [int(im.split(".")[0].split("_")[-1]) for im in ims]
 
 cells = []
 
 c = 1
 # Go through each image
 for imbase, splitNum in zip(imbases, splitNums):
-    fname = f'phaseContrast_{imbase}_{str(splitNum)}.png'
-    imPath = os.path.join('../data',experiment,'phaseContrast',fname)
+    fname = f"phaseContrast_{imbase}_{str(splitNum)}.png"
+    imPath = os.path.join("../data", experiment, "phaseContrast", fname)
     im = imread(imPath)
-    outputs = predictor(im)['instances'].to("cpu")
+    outputs = predictor(im)["instances"].to("cpu")
     nCells = len(outputs)
 
     # Append information for each cell
@@ -94,19 +103,19 @@ for imbase, splitNum in zip(imbases, splitNums):
         # TODO: Merge all images
         mask = clear_border(mask)
         # Check that cell is not just some artifact
-        if np.sum(mask)>10:
+        if np.sum(mask) > 10:
             cells.append(cellPerims(experiment, imbase, splitNum, mask))
-    c+=1
+    c += 1
 
     # Save periodically
     if c % 100 == 0:
-        print(f'Saving at ../results/{experiment}.pickle')
+        print(f"Saving at ../results/{experiment}.pickle")
         pickle.dump(cells, open(os.path.join(resDir, f"{experiment}.pickle"), "wb"))
-pickle.dump(cells, open(os.path.join(resDir, f'{experiment}.pickle'), "wb"))
+pickle.dump(cells, open(os.path.join(resDir, f"{experiment}.pickle"), "wb"))
 # %%
-cells = pickle.load(open(os.path.join(resDir, f'{experiment}.pickle'),"rb"))
+cells = pickle.load(open(os.path.join(resDir, f"{experiment}.pickle"), "rb"))
 # Align cells
-print('Aligning Cells')
+print("Aligning Cells")
 cells = alignPerimeters(cells)
 
 # Split into wells and save results
@@ -114,19 +123,19 @@ cells = alignPerimeters(cells)
 # Get unique wells
 wells = []
 for cell in cells:
-    well = cell.imageBase.split('_')[0]
+    well = cell.imageBase.split("_")[0]
     wells.append(well)
 
 # Split cells associated with well into dictionary
 wellDict = {well: [] for well in np.unique(wells)}
 
 for cell in cells:
-    well = cell.imageBase.split('_')[0]
+    well = cell.imageBase.split("_")[0]
     wellDict[well].append(cell)
 
 
 for well in wellDict.keys():
-    saveFile = os.path.join(resDir, f'{experiment}-{well}.pickle')
+    saveFile = os.path.join(resDir, f"{experiment}-{well}.pickle")
     print(saveFile)
     pickle.dump(wellDict[well], open(saveFile, "wb"))
 # %%

@@ -10,28 +10,33 @@ ESAM +/- cells, then save these images *with the background set to black*.\
 *Appropriate meaning the cells is not significantly cut off by the edge, the cell is fluorescing
 properly, and the date is appropriate. 
 """
+import importlib
+
 # %%
-import sys, importlib
-sys.path.append('../')
+import sys
+
+sys.path.append("../")
+import datetime
+import os
+
 # importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
-import os
-import cv2
-import numpy as np
-from tqdm import tqdm
-from skimage.io import imread, imsave
-from skimage.transform import rescale, resize
 
-import matplotlib.pyplot as plt
-from cellMorph import cellPerims
 import cellMorphHelper
-import datetime
-
-from skimage import data, measure
-from skimage.segmentation import clear_border
-
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn.functional as F
+from skimage import data, measure
+from skimage.io import imread, imsave
+from skimage.segmentation import clear_border
+from skimage.transform import rescale, resize
+from tqdm import tqdm
+
+from cellMorph import cellPerims
+
+
 # %%
 def findFluorescenceColor(RGB, mask):
     """
@@ -40,29 +45,31 @@ def findFluorescenceColor(RGB, mask):
     Output: Color
     """
     # RGB = imread(RGBLocation)
-    mask = mask.astype('bool')
-    RGB[~np.dstack((mask,mask,mask))] = 0
+    mask = mask.astype("bool")
+    RGB[~np.dstack((mask, mask, mask))] = 0
     nGreen, BW = cellMorphHelper.segmentGreen(RGB)
     nRed, BW = cellMorphHelper.segmentRed(RGB)
-    if nGreen>=(nRed+100):
+    if nGreen >= (nRed + 100):
         return "green"
-    elif nRed>=(nGreen+100):
+    elif nRed >= (nGreen + 100):
         return "red"
     else:
         return "NaN"
+
+
 # %%
-predictor = cellMorphHelper.getSegmentModel('../../output/TJ2201Split16')
+predictor = cellMorphHelper.getSegmentModel("../../output/TJ2201Split16")
 # %% Filter out basics
-experiment = 'TJ2201Split16'
-wells = ['E2', 'D2']
+experiment = "TJ2201Split16"
+wells = ["E2", "D2"]
 finalDate = datetime.datetime(2022, 4, 8, 16, 0)
 maxSize = 150
 maxRows, maxCols = maxSize, maxSize
-savePath = '../../data/esamMonoSegmented'
+savePath = "../../data/esamMonoSegmented"
 
-expPath = f'../../data/{experiment}/'
-pcPath = os.path.join(expPath, 'phaseContrast')
-compositePath = os.path.join(expPath, 'composite')
+expPath = f"../../data/{experiment}/"
+pcPath = os.path.join(expPath, "phaseContrast")
+compositePath = os.path.join(expPath, "composite")
 
 pcIms = os.listdir(pcPath)
 compositeIms = os.listdir(compositePath)
@@ -70,24 +77,24 @@ compositeIms = os.listdir(compositePath)
 imgBases = []
 for pcFile in pcIms:
     imgBase = cellMorphHelper.getImageBase(pcFile)
-    well = imgBase.split('_')[0]
+    well = imgBase.split("_")[0]
     if well in wells:
-        date = cellMorphHelper.convertDate('_'.join(imgBase.split('_')[2:4]))
+        date = cellMorphHelper.convertDate("_".join(imgBase.split("_")[2:4]))
         if date < finalDate:
             imgBases.append(imgBase)
 # %% Load and segment data
 idx = 0
 for imgBase in tqdm(imgBases):
     # Grab image
-    well = imgBase.split('_')[0]
-    pcFile = f'phaseContrast_{imgBase}.png'
-    compositeFile = f'composite_{imgBase}.png'
+    well = imgBase.split("_")[0]
+    pcFile = f"phaseContrast_{imgBase}.png"
+    compositeFile = f"composite_{imgBase}.png"
 
     pcImg = imread(os.path.join(pcPath, pcFile))
     compositeImg = imread(os.path.join(compositePath, compositeFile))
 
     imSize = pcImg.shape
-    outputs = predictor(pcImg)['instances'].to("cpu")
+    outputs = predictor(pcImg)["instances"].to("cpu")
     nCells = len(outputs)
 
     # Go through each cell
@@ -97,33 +104,35 @@ for imgBase in tqdm(imgBases):
         # Crop to bounding box
         bb = list(outputs.pred_boxes[cellNum])[0].numpy()
         bb = [int(corner) for corner in bb]
-        compositeCrop = compositeImg[bb[1]:bb[3], bb[0]:bb[2]].copy()
-        pcCrop = pcImg[bb[1]:bb[3], bb[0]:bb[2]].copy()
-        maskCrop = mask[bb[1]:bb[3], bb[0]:bb[2]].copy().astype('bool')
+        compositeCrop = compositeImg[bb[1] : bb[3], bb[0] : bb[2]].copy()
+        pcCrop = pcImg[bb[1] : bb[3], bb[0] : bb[2]].copy()
+        maskCrop = mask[bb[1] : bb[3], bb[0] : bb[2]].copy().astype("bool")
         color = findFluorescenceColor(compositeCrop, maskCrop)
 
-        pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
-        pcCrop = torch.tensor(pcCrop[:,:,0])
+        pcCrop[~np.dstack((maskCrop, maskCrop, maskCrop))] = 0
+        pcCrop = torch.tensor(pcCrop[:, :, 0])
         # Keep aspect ratio and scale down data to be 150x150 (should be rare)
-        if pcCrop.shape[0]>maxRows:
-            pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[0])
-        if pcCrop.shape[1]>maxCols:
-            pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[1])
+        if pcCrop.shape[0] > maxRows:
+            pcCrop = rescale(pcCrop, maxRows / pcCrop.shape[0])
+        if pcCrop.shape[1] > maxCols:
+            pcCrop = rescale(pcCrop, maxRows / pcCrop.shape[1])
 
         # Now pad out the amount to make it 150x150
-        diffRows = int((maxRows - pcCrop.shape[0])/2)+1
-        diffCols = int((maxCols - pcCrop.shape[1])/2)
-        pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
+        diffRows = int((maxRows - pcCrop.shape[0]) / 2) + 1
+        diffCols = int((maxCols - pcCrop.shape[1]) / 2)
+        pcCrop = F.pad(
+            torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)
+        ).numpy()
         # Resize in case the difference was not actually an integer
         pcCrop = resize(pcCrop, (maxRows, maxCols))
 
         # Save in appropriate folder
-        if well == 'E2' and color == 'red':
-            saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
+        if well == "E2" and color == "red":
+            saveFile = os.path.join(savePath, "esamNegative", f"{imgBase}-{idx}.png")
             imsave(saveFile, pcCrop)
             idx += 1
-        elif well == 'D2' and color == 'green':
-            saveFile = os.path.join(savePath, 'esamPositive', f'{imgBase}-{idx}.png')
+        elif well == "D2" and color == "green":
+            saveFile = os.path.join(savePath, "esamPositive", f"{imgBase}-{idx}.png")
             imsave(saveFile, pcCrop)
             idx += 1
 # %%
@@ -153,7 +162,7 @@ for imgBase in tqdm(imgBases):
 # plt.subplot(133)
 # plt.imshow(compositeImg)
 
-# # %% 
+# # %%
 # import torch
 
 # source = torch.tensor(pcCrop[:,:,0].copy())
@@ -168,5 +177,3 @@ for imgBase in tqdm(imgBases):
 # maxCols = 150
 # pcCrop = torch.rand((160,900))
 # pcCrop = torch.rand((160,170))
-
-

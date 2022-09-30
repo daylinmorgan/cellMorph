@@ -2,20 +2,23 @@
 """
 Holds necessary structural information for storing cell information
 """
+import datetime
+import os
+
+import matplotlib.pyplot as plt
+
 # %%
 import numpy as np
-import os
-import matplotlib.pyplot as plt
-import datetime
+from scipy.interpolate import interp1d
+from skimage.color import rgb2hsv
 from skimage.io import imread
 from skimage.measure import find_contours
-from skimage.color import rgb2hsv
 
-from scipy.interpolate import interp1d
+
 # %%
-def interpolatePerimeter(perim: np.array, nPts: int=150):
+def interpolatePerimeter(perim: np.array, nPts: int = 150):
     """
-    Interpolates a 2D curve to a given number of points. 
+    Interpolates a 2D curve to a given number of points.
     Adapted from: https://stackoverflow.com/questions/52014197/how-to-interpolate-a-2d-curve-in-python
     Inputs:
     perim: 2D numpy array of dimension nptsx2
@@ -23,14 +26,15 @@ def interpolatePerimeter(perim: np.array, nPts: int=150):
     Outputs:
     perimInt: Interpolated perimeter
     """
-    distance = np.cumsum( np.sqrt(np.sum( np.diff(perim, axis=0)**2, axis=1 )) )
-    distance = np.insert(distance, 0, 0)/distance[-1]
+    distance = np.cumsum(np.sqrt(np.sum(np.diff(perim, axis=0) ** 2, axis=1)))
+    distance = np.insert(distance, 0, 0) / distance[-1]
     alpha = np.linspace(0, 1, nPts)
 
-    interpolator =  interp1d(distance, perim, kind='cubic', axis=0)
+    interpolator = interp1d(distance, perim, kind="cubic", axis=0)
     perimInt = interpolator(alpha)
-    
+
     return perimInt
+
 
 def segmentGreen(RGB):
     """
@@ -54,9 +58,14 @@ def segmentGreen(RGB):
     channel3Max = 1.000
 
     # Create mask based on chosen histogram thresholds
-    sliderBW =  np.array(I[:,:,0] >= channel1Min ) & np.array(I[:,:,0] <= channel1Max) & \
-                np.array(I[:,:,1] >= channel2Min ) & np.array(I[:,:,1] <= channel2Max) & \
-                np.array(I[:,:,2] >= channel3Min ) & np.array(I[:,:,2] <= channel3Max)
+    sliderBW = (
+        np.array(I[:, :, 0] >= channel1Min)
+        & np.array(I[:, :, 0] <= channel1Max)
+        & np.array(I[:, :, 1] >= channel2Min)
+        & np.array(I[:, :, 1] <= channel2Max)
+        & np.array(I[:, :, 2] >= channel3Min)
+        & np.array(I[:, :, 2] <= channel3Max)
+    )
     BW = sliderBW
 
     # Initialize output masked image based on input image.
@@ -67,6 +76,7 @@ def segmentGreen(RGB):
 
     nGreen = np.sum(BW)
     return nGreen, BW
+
 
 def segmentRed(RGB):
     """
@@ -90,9 +100,15 @@ def segmentRed(RGB):
     channel3Max = 1.000
 
     # Create mask based on chosen histogram thresholds
-    sliderBW =  np.array(I[:,:,0] >= channel1Min )  | np.array(I[:,:,0] <= channel1Max)  & \
-                np.array(I[:,:,1] >= channel2Min ) &  np.array(I[:,:,1] <= channel2Max) & \
-                np.array(I[:,:,2] >= channel3Min ) &  np.array(I[:,:,2] <= channel3Max)
+    sliderBW = np.array(I[:, :, 0] >= channel1Min) | np.array(
+        I[:, :, 0] <= channel1Max
+    ) & np.array(I[:, :, 1] >= channel2Min) & np.array(
+        I[:, :, 1] <= channel2Max
+    ) & np.array(
+        I[:, :, 2] >= channel3Min
+    ) & np.array(
+        I[:, :, 2] <= channel3Max
+    )
     BW = sliderBW
 
     # Initialize output masked image based on input image.
@@ -105,6 +121,7 @@ def segmentRed(RGB):
     nRed = np.sum(BW)
     return nRed, BW
 
+
 def findFluorescenceColor(RGBLocation, mask):
     """
     Finds the fluorescence of a cell
@@ -112,75 +129,83 @@ def findFluorescenceColor(RGBLocation, mask):
     Output: Color
     """
     RGB = imread(RGBLocation)
-    RGB[~np.dstack((mask,mask,mask))] = 0
+    RGB[~np.dstack((mask, mask, mask))] = 0
     nGreen, BW = segmentGreen(RGB)
     nRed, BW = segmentRed(RGB)
-    if nGreen>=(nRed+100):
+    if nGreen >= (nRed + 100):
         return "green"
-    elif nRed>=(nGreen+100):
+    elif nRed >= (nGreen + 100):
         return "red"
     else:
         return "NaN"
 
+
 def convertDate(date):
     """
     Returns a python datetime format of the Incucyte date format
-    NOTE: This is very hardcoded and relies on a specific format. 
+    NOTE: This is very hardcoded and relies on a specific format.
 
     Input example: 2022y04m11d_00h00m
     Output example: 2022-04-11 00:00:00
     """
-    year =      int(date[0:4])
-    month =     int(date[5:7])
-    day =       int(date[8:10])
-    hour =      int(date[12:14])
-    minute =    int(date[15:17])
+    year = int(date[0:4])
+    month = int(date[5:7])
+    day = int(date[8:10])
+    hour = int(date[12:14])
+    minute = int(date[15:17])
 
-    date = datetime.datetime(year,month,day,hour,minute)
+    date = datetime.datetime(year, month, day, hour, minute)
 
     return date
+
 
 # %%
 class cellPerims:
     """
     Assigns properties of cells from phase contrast imaging
-    """    
+    """
+
     def __init__(self, experiment, imageBase, splitNum, mask):
         self.experiment = experiment
         self.imageBase = imageBase
         self.splitNum = splitNum
-        fname = imageBase+'_'+str(splitNum)+'.png'
-        self.phaseContrast = os.path.join('../data', experiment, 'phaseContrast','phaseContrast_'+fname)
-        self.composite = os.path.join('../data', experiment, 'composite', 'composite_'+fname)
+        fname = imageBase + "_" + str(splitNum) + ".png"
+        self.phaseContrast = os.path.join(
+            "../data", experiment, "phaseContrast", "phaseContrast_" + fname
+        )
+        self.composite = os.path.join(
+            "../data", experiment, "composite", "composite_" + fname
+        )
         self.mask = mask
 
         self.perimeter = self.findPerimeter()
 
         self.color = findFluorescenceColor(self.composite, self.mask)
 
-        self.perimAligned = ''
-     
+        self.perimAligned = ""
+
         self.perimInt = interpolatePerimeter(self.perimeter)
 
-        self.well = imageBase.split('_')[0]
-        date = imageBase.split('_')[2:]
-        assert 'y' in date[0], 'No year in date, check to make sure it is a split image'
-        date = '_'.join(date)
+        self.well = imageBase.split("_")[0]
+        date = imageBase.split("_")[2:]
+        assert "y" in date[0], "No year in date, check to make sure it is a split image"
+        date = "_".join(date)
         self.date = convertDate(date)
+
     def imshow(self):
         RGB = imread(self.composite)
         mask = self.mask
         # RGB[~np.dstack((mask,mask,mask))] = 0
         plt.figure()
         plt.imshow(RGB)
-        plt.plot(self.perimeter[:,1], self.perimeter[:,0], c = 'red')
+        plt.plot(self.perimeter[:, 1], self.perimeter[:, 0], c="red")
         plt.title(self.color)
 
     def findPerimeter(self):
         c = find_contours(self.mask)
         # assert len(c) == 1, "Error for {}".format(self.composite)
         return c[0]
-    
+
 
 # If something bad happened where you need to pickle a new object, fix it with this:
 # for cell in cells:
