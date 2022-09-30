@@ -40,9 +40,6 @@ class esamMono():
             for f in tqdm(os.listdir(label)):
                 path = os.path.join(label, f)
                 img = imread(path)
-                print(path)
-                plt.imshow(img)
-                return
                 self.training_data.append([np.array(img), np.eye(2)[self.labels[label]]])
         np.random.shuffle(self.training_data)
         np.save('../../data/esamMonoSegmented/training_data.npy', self.training_data)

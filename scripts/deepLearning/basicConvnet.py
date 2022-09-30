@@ -12,9 +12,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 # -
-
-os.listdir()
-
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
     print("running on GPU")
@@ -100,7 +97,7 @@ def test(size=32):
 
 def train(net):
     BATCH_SIZE = 100
-    EPOCHS = 1
+    EPOCHS = 30
 
     with open(f"../../data/esamMonoSegmented/logs/{MODEL_NAME}.log", "a") as f:
         for epoch in range(EPOCHS):

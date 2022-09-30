@@ -115,8 +115,9 @@ for imgBase in tqdm(imgBases):
         diffCols = int((maxCols - pcCrop.shape[1])/2)
         pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
         # Resize in case the difference was not actually an integer
-        pcCrop = resize(pcCrop, (maxRows, maxCols)).astype('uint8')
+        pcCrop = resize(pcCrop, (maxRows, maxCols))
 
+        # Save in appropriate folder
         if well == 'E2' and color == 'red':
             saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
             imsave(saveFile, pcCrop)
